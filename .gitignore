@@ -1,2 +1,8 @@
+# Cache files
 *.dbeaver*
 *.vscode*
+*__pycache__*
+
+
+# Environment files
+*.env

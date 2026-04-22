@@ -1,0 +1,17 @@
+name: hcd
+channels:
+  - conda-forge    # Priority 1: Ensures all DLLs (OpenCV, MKL) come from the same source
+  - defaults       # Priority 2: Backup for standard libs
+dependencies:
+  - python=3.12
+  - pip            # Required to install Paddle later if needed
+  
+  # Core Data & Backend
+  - pandas
+  - sqlalchemy
+  - pydantic
+  - python-dateutil
+  - fastapi
+  - uvicorn
+  - cryptography
+  - regex
