@@ -14,6 +14,7 @@ ROOT_DIR = os.path.dirname(BACKEND_DIR)
 # 4. Point into the root's 'db' folder and target 'users.csv'
 CSV_PATH = os.path.join(ROOT_DIR, 'db', 'users.csv')
 
+
 def get_team_data_from_csv(team_number: str):
     """
     Opens the CSV file, reads it row by row, and looks for a matching team_number.
@@ -30,7 +31,7 @@ def get_team_data_from_csv(team_number: str):
     except FileNotFoundError:
         print(f"Error: Could not find CSV at {CSV_PATH}")
         raise HTTPException(status_code=500, detail="Internal server error: Data source missing")
-        
+
     return None
 
 
