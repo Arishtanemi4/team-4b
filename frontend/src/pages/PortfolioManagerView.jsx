@@ -1,35 +1,116 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowDown, ArrowUp, ArrowRight, Bell } from "lucide-react";
 import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, ZAxis, Cell } from "recharts";
 import "../App.css";
 
-// --- Mock Data ---
-const heatmapData = [
-  { team: "Team Alpha",   scores: ["bg-green", "bg-green", "bg-green", "bg-green", "bg-green", "bg-red", "bg-green"] },
-  { team: "Team Beta",    scores: ["bg-yellow", "bg-green", "bg-red", "bg-green", "bg-yellow", "bg-green", "bg-red"] },
-  { team: "Team Gamma",   scores: ["bg-red", "bg-yellow", "bg-yellow", "bg-red", "bg-green", "bg-yellow", "bg-green"] },
-  { team: "Team Delta",   scores: ["bg-green", "bg-red", "bg-green", "bg-yellow", "bg-green", "bg-red", "bg-red"] },
-  { team: "Team Epsilon", scores: ["bg-green", "bg-yellow", "bg-green", "bg-green", "bg-green", "bg-yellow", "bg-green"] },
-];
-
-const scatterData = [
-  { x: 30, y: 75, name: "", color: "#ef4444" },
-  { x: 80, y: 80, name: "Delta", color: "#f59e0b" },
-  { x: 60, y: 45, name: "", color: "#1e3a8a" },
-  { x: 65, y: 55, name: "", color: "#ef4444" },
-  { x: 55, y: 25, name: "", color: "#1e3a8a" },
-  { x: 45, y: 20, name: "", color: "#4ade80" },
-  { x: 85, y: 35, name: "Beta", color: "#ef4444" },
-  { x: 75, y: 65, name: "", color: "#115e59" },
-];
+// Update this to match your FastAPI server address & port
+const API_BASE_URL = "http://localhost:8000"; 
 
 export default function PortfolioManagerView() {
+  // --- State Hooks for API Data ---
+  const [kpis, setKpis] = useState({
+    needSupport: null,
+    teamTrend: null,
+    avgHealth: null,
+    delConf: null
+  });
+  
+  const [supportTeams, setSupportTeams] = useState([]);
+  const [heatmapData, setHeatmapData] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [scatterData, setScatterData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // --- Data Fetching ---
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [
+          needSupportRes,
+          teamTrendRes,
+          avgHealthRes,
+          delConfRes,
+          sendSupportRes,
+          heatmapRes,
+          perfOutlookRes,
+          alertsRes
+        ] = await Promise.all([
+          fetch(`${API_BASE_URL}/portfolio/need-support`),
+          fetch(`${API_BASE_URL}/portfolio/team-trend`),
+          fetch(`${API_BASE_URL}/portfolio/avg-health`),
+          fetch(`${API_BASE_URL}/portfolio/del-conf`),
+          fetch(`${API_BASE_URL}/portfolio/send-support?top_n=5`),
+          fetch(`${API_BASE_URL}/portfolio/status-heatmap`),
+          fetch(`${API_BASE_URL}/portfolio/perf-outlook`),
+          fetch(`${API_BASE_URL}/portfolio/alerts?top_n=10`)
+        ]);
+
+        setKpis({
+          needSupport: await needSupportRes.json(),
+          teamTrend: await teamTrendRes.json(),
+          avgHealth: await avgHealthRes.json(),
+          delConf: await delConfRes.json()
+        });
+
+        setSupportTeams(await sendSupportRes.json());
+        setHeatmapData(await heatmapRes.json());
+        setScatterData(await perfOutlookRes.json());
+        setAlerts(await alertsRes.json());
+
+      } catch (error) {
+        console.error("Error fetching portfolio dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // --- Helper Functions ---
+  
+  // Safely extracts a display value from an object to prevent React crashes
+  const safeKpiRender = (kpiData) => {
+    if (kpiData === null || kpiData === undefined) return "--";
+    if (typeof kpiData === "object") {
+      // Looks for standard keys your backend might use for the main number
+      return kpiData.count ?? kpiData.score ?? kpiData.value ?? kpiData.average ?? "?";
+    }
+    return kpiData; // If it's already just a primitive number/string
+  };
+
+  const getBadgeClass = (priority) => {
+    if (!priority) return "badge-med";
+    const lowerPriority = String(priority).toLowerCase();
+    if (lowerPriority === "high") return "badge-high";
+    if (lowerPriority === "low") return "badge-low"; 
+    return "badge-med";
+  };
+
+  const getBellColor = (level) => {
+    if (!level) return "#f59e0b"; 
+    const lowerLevel = String(level).toLowerCase();
+    if (lowerLevel === "high") return "#ef4444"; 
+    if (lowerLevel === "low") return "#4ade80";  
+    return "#f59e0b"; 
+  };
+
+  // --- Loading State UI ---
+  if (isLoading) {
+    return (
+      <div className="app-inner" style={{ backgroundColor: "#e2e8f0", padding: "16px", borderRadius: "8px", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "600px" }}>
+        <h2>Loading Portfolio Data...</h2>
+      </div>
+    );
+  }
+
+  // --- Main Dashboard UI ---
   return (
     <div className="app-inner" style={{ backgroundColor: "#e2e8f0", padding: "16px", borderRadius: "8px" }}>
       
       {/* Top Banner */}
       <div className="portfolio-header">
-        <div style={{ width: "40px" }}></div> {/* Spacer */}
+        <div style={{ width: "40px" }}></div> 
         <div>HCD Portfolio Action Console</div>
         <div className="portfolio-header-dots">
           <div className="header-dot"></div>
@@ -44,25 +125,25 @@ export default function PortfolioManagerView() {
           <div className="kpi-card">
             <div className="kpi-title">Teams Needing Support</div>
             <div className="kpi-value" style={{ color: "#ef4444" }}>
-              3 <ArrowDown size={32} strokeWidth={3} />
+              {safeKpiRender(kpis.needSupport)} <ArrowDown size={32} strokeWidth={3} />
             </div>
           </div>
           <div className="kpi-card">
             <div className="kpi-title">Teams Trending Down</div>
             <div className="kpi-value" style={{ color: "#f59e0b" }}>
-              2 <ArrowDown size={32} strokeWidth={3} />
+              {safeKpiRender(kpis.teamTrend)} <ArrowDown size={32} strokeWidth={3} />
             </div>
           </div>
           <div className="kpi-card">
             <div className="kpi-title">Avg Behaviour Health</div>
             <div className="kpi-value" style={{ color: "#f59e0b" }}>
-              68 <ArrowRight size={32} strokeWidth={3} />
+              {safeKpiRender(kpis.avgHealth)} <ArrowRight size={32} strokeWidth={3} />
             </div>
           </div>
           <div className="kpi-card">
             <div className="kpi-title">Avg Delivery Confidence</div>
             <div className="kpi-value" style={{ color: "#22c55e" }}>
-              72 <ArrowUp size={32} strokeWidth={3} />
+              {safeKpiRender(kpis.delConf)} <ArrowUp size={32} strokeWidth={3} />
             </div>
           </div>
         </div>
@@ -70,7 +151,7 @@ export default function PortfolioManagerView() {
         {/* Main Grid */}
         <div className="dashboard-main-grid">
           
-          {/* Left Column */}
+          {/* Left Column: Support Teams */}
           <div className="dash-panel">
             <div className="dash-panel-header">Send Support Now</div>
             <table className="support-table">
@@ -83,30 +164,30 @@ export default function PortfolioManagerView() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td style={{ fontWeight: 600 }}>Team Gamma</td>
-                  <td><span className="badge-high">High</span></td>
-                  <td>Low Psychological Safety</td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td style={{ fontWeight: 600 }}>Team Delta</td>
-                  <td><span className="badge-med">Med</span></td>
-                  <td>High Cognitive Load</td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td style={{ fontWeight: 600 }}>Team Beta</td>
-                  <td><span className="badge-high">High</span></td>
-                  <td>Access Problems</td>
-                  <td></td>
-                </tr>
+                {Array.isArray(supportTeams) ? (
+                  supportTeams.length > 0 ? (
+                    supportTeams.map((item, index) => (
+                      <tr key={index}>
+                        <td style={{ fontWeight: 600 }}>{item.team || item.team_name || "Unknown"}</td>
+                        <td><span className={getBadgeClass(item.priority)}>{item.priority || "Med"}</span></td>
+                        <td>{item.issue || "N/A"}</td>
+                        <td>{item.action || ""}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr><td colSpan="4" style={{ textAlign: "center", padding: "1rem" }}>No support interventions required.</td></tr>
+                  )
+                ) : (
+                  <tr><td colSpan="4" style={{ textAlign: "center", padding: "1rem", color: "red" }}>Data format error: Expected a list of teams.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
 
-          {/* Middle Column */}
+          {/* Middle Column: Heatmap & Alerts */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            
+            {/* Heatmap Panel */}
             <div className="dash-panel">
               <div className="dash-panel-header">Team Status Heatmap</div>
               <div className="heatmap-container">
@@ -120,43 +201,65 @@ export default function PortfolioManagerView() {
                   <div className="heatmap-header-cell">Safety</div>
                   <div className="heatmap-header-cell">Cog. Load</div>
                   
-                  {heatmapData.map((row, i) => (
-                    <React.Fragment key={i}>
-                      <div className="heatmap-row-label">{row.team}</div>
-                      {row.scores.map((colorClass, j) => (
-                        <div key={j} className={`heatmap-cell ${colorClass}`}></div>
-                      ))}
-                    </React.Fragment>
-                  ))}
+                  {Array.isArray(heatmapData) ? (
+                    heatmapData.length > 0 ? (
+                      heatmapData.map((row, i) => (
+                        <React.Fragment key={i}>
+                          <div className="heatmap-row-label">{row.team || `Team ${i + 1}`}</div>
+                          {Array.isArray(row.scores) ? (
+                            row.scores.map((colorClass, j) => (
+                              <div key={j} className={`heatmap-cell ${colorClass}`}></div>
+                            ))
+                          ) : (
+                            <div style={{ gridColumn: "span 7", fontSize: "0.8rem", color: "red" }}>Invalid score data</div>
+                          )}
+                        </React.Fragment>
+                      ))
+                    ) : (
+                      <div style={{ gridColumn: "1 / -1", padding: "1rem", textAlign: "center" }}>No heatmap data available.</div>
+                    )
+                  ) : (
+                    <div style={{ gridColumn: "1 / -1", padding: "1rem", color: "red", textAlign: "center" }}>
+                      Data format error: Expected an array for heatmap.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
+            {/* Alerts Panel */}
             <div className="dash-panel">
               <div className="dash-panel-header">Alert Summary</div>
               <div className="alerts-list">
-                <div className="alert-item">
-                  <Bell color="#4ade80" fill="#4ade80" size={20} />
-                  <div><strong>Team Gamma:</strong> Low Psychological Safety – <em>Send Facilitator</em></div>
-                </div>
-                <div className="alert-item">
-                  <Bell color="#ef4444" fill="#ef4444" size={20} />
-                  <div><strong>Team Delta:</strong> High Cognitive Load – <em>Provide Guidance</em></div>
-                </div>
-                <div className="alert-item">
-                  <Bell color="#f59e0b" fill="#f59e0b" size={20} />
-                  <div><strong>Team Beta:</strong> Access Problems – <em>Unblock Resources</em></div>
-                </div>
+                {Array.isArray(alerts) ? (
+                  alerts.length > 0 ? (
+                    alerts.map((alert, index) => {
+                      const bellColor = getBellColor(alert.level);
+                      return (
+                        <div className="alert-item" key={index}>
+                          <Bell color={bellColor} fill={bellColor} size={20} />
+                          <div>
+                            <strong>{alert.team || "System"}:</strong> {alert.issue || "Alert"} – <em>{alert.action || "Please review"}</em>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ padding: "1rem", color: "#64748b" }}>No active alerts.</div>
+                  )
+                ) : (
+                  <div style={{ padding: "1rem", color: "red" }}>Data format error: Expected an array of alerts.</div>
+                )}
               </div>
             </div>
+
           </div>
 
-          {/* Right Column */}
+          {/* Right Column: Scatter Chart */}
           <div className="dash-panel">
             <div className="dash-panel-header">Performance Outlook</div>
             <div className="scatter-wrapper">
               
-              {/* CSS Background Quadrants to match design exactly */}
               <div className="quadrant-bg">
                 <div className="quad-tl"></div>
                 <div className="quad-tr"></div>
@@ -164,25 +267,29 @@ export default function PortfolioManagerView() {
                 <div className="quad-br"></div>
               </div>
 
-              {/* Labels overlay */}
               <div className="quadrant-label lbl-tl">Front<br/>Runners</div>
               <div className="quadrant-label lbl-tr">High Risk<br/>Zone</div>
               <div className="quadrant-label lbl-bl">Potential,<br/>Needs Support</div>
 
-              <ResponsiveContainer width="100%" height="100%" style={{ zIndex: 10, position: "relative" }}>
-                <ScatterChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                  <XAxis type="number" dataKey="x" name="Behaviour Health" domain={[0, 100]} hide />
-                  <YAxis type="number" dataKey="y" name="Delivery Confidence" domain={[0, 100]} hide />
-                  <ZAxis type="number" range={[100, 100]} />
-                  <Scatter data={scatterData} isAnimationActive={false}>
-                    {scatterData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Scatter>
-                </ScatterChart>
-              </ResponsiveContainer>
+              {Array.isArray(scatterData) && scatterData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%" style={{ zIndex: 10, position: "relative" }}>
+                  <ScatterChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                    <XAxis type="number" dataKey="x" name="Behaviour Health" domain={[0, 100]} hide />
+                    <YAxis type="number" dataKey="y" name="Delivery Confidence" domain={[0, 100]} hide />
+                    <ZAxis type="number" range={[100, 100]} />
+                    <Scatter data={scatterData} isAnimationActive={false}>
+                      {scatterData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color || "#1e3a8a"} />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ zIndex: 10, position: "relative", height: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                   {Array.isArray(scatterData) ? "No chart data available." : <span style={{color: "red"}}>Data format error.</span>}
+                </div>
+              )}
               
-              {/* Custom Axes Labels for visual match */}
               <div style={{ position: "absolute", bottom: "5px", left: "0", width: "100%", textAlign: "center", fontSize: "0.85rem", fontWeight: 600, color: "#334155" }}>
                 Behaviour Health
               </div>
