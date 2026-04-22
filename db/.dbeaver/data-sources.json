@@ -1,0 +1,35 @@
+{
+	"folders": {},
+	"connections": {
+		"sqlite_jdbc-19db6b34855-2fdffbb843c29892": {
+			"provider": "sqlite",
+			"driver": "sqlite_jdbc",
+			"name": "hcd",
+			"save-password": true,
+			"configuration": {
+				"database": "E:\\hackathon\\team-4b\\db\\hcd",
+				"url": "jdbc:sqlite:E:\\hackathon\\team-4b\\db\\hcd",
+				"configurationType": "MANUAL",
+				"type": "dev",
+				"closeIdleConnection": true,
+				"auth-model": "native"
+			}
+		}
+	},
+	"connection-types": {
+		"dev": {
+			"name": "Development",
+			"color": "255,255,255",
+			"description": "Regular development database",
+			"auto-commit": true,
+			"confirm-execute": false,
+			"confirm-data-change": false,
+			"smart-commit": false,
+			"smart-commit-recover": true,
+			"auto-close-transactions": true,
+			"close-transactions-period": 1800,
+			"auto-close-connections": true,
+			"close-connections-period": 14400
+		}
+	}
+}
