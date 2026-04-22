@@ -1,41 +1,43 @@
-import sqlite3
+import csv
 import os
 from fastapi import HTTPException
 
-# 1. Get the directory of the current file (.../team-4b/backend/services)
+# 1. Get the directory of the current file (.../backend/services)
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# 2. Go up one level to 'backend'
+# 2. Go up one level to the 'backend' folder
 BACKEND_DIR = os.path.dirname(CURRENT_DIR)
 
-# 3. Go up one more level to 'team-4b' (the root project folder)
-ROOT_DIR = os.path.dirname(BACKEND_DIR)
+# 3. Point into the 'db' folder and target 'users.csv'
+CSV_PATH = os.path.join(BACKEND_DIR, 'db', 'users.csv')
 
-# 4. Point into the 'db' folder and select 'hcd.db'
-DB_PATH = os.path.join(ROOT_DIR, 'db', 'hcd.db')
-
-
-def get_team_data_from_db(team_number: str):
+def get_team_data_from_csv(team_number: str):
     """
-    Connects to SQLite and fetches the password_hash and team_name 
-    for the given team_number.
+    Opens the CSV file, reads it row by row, and looks for a matching team_number.
     """
-    with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.cursor()
+    try:
+        # Open the CSV file in read mode
+        with open(CSV_PATH, mode='r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            
+            for row in reader:
+                if row['team_number'] == team_number:
+                    return row['password_hash'], row['team_name']
+                    
+    except FileNotFoundError:
+        print(f"Error: Could not find CSV at {CSV_PATH}")
+        raise HTTPException(status_code=500, detail="Internal server error: Data source missing")
         
-        # Parameterized query to prevent SQL Injection
-        query = "SELECT password_hash, team_name FROM user_login WHERE team_number = ?"
-        cursor.execute(query, (team_number,))
-        
-        return cursor.fetchone() # Returns a tuple: (password_hash, team_name)
+    return None
+
+
 
 def process_authentication(team_number: str, provided_password_hash: str) -> dict:
     """
-    Fetches the stored hash from the database and compares it directly
-    to the provided hash (no encryption/decryption involved).
+    Authenticates by comparing the provided hash against the CSV data.
     """
-    # 1. Fetch the team's stored data from the SQLite database
-    result = get_team_data_from_db(team_number)
+    # 1. Fetch the data using the new CSV function
+    result = get_team_data_from_csv(team_number)
     
     # 2. Check if the team exists
     if not result:
@@ -43,7 +45,7 @@ def process_authentication(team_number: str, provided_password_hash: str) -> dic
         
     stored_db_hash, team_name = result
         
-    # 3. Direct string comparison (Plaintext check)
+    # 3. Direct string comparison
     if provided_password_hash != stored_db_hash:
         raise HTTPException(status_code=401, detail="Invalid team number or password")
     
