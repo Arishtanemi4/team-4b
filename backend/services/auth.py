@@ -2,22 +2,25 @@ import csv
 import os
 from fastapi import HTTPException
 
-# 1. Get the directory of the current file (.../backend/services)
+# 1. Get the directory of the current file (.../root/backend/services)
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# 2. Go up one level to the 'backend' folder
+# 2. Go up one level to the 'backend' directory (.../root/backend)
 BACKEND_DIR = os.path.dirname(CURRENT_DIR)
 
-# 3. Point into the 'db' folder and target 'users.csv'
-CSV_PATH = os.path.join(BACKEND_DIR, 'db', 'users.csv')
+# 3. Go up one MORE level to your project 'root' directory (.../root)
+ROOT_DIR = os.path.dirname(BACKEND_DIR)
+
+# 4. Point into the root's 'db' folder and target 'users.csv'
+CSV_PATH = os.path.join(ROOT_DIR, 'db', 'users.csv')
 
 def get_team_data_from_csv(team_number: str):
     """
     Opens the CSV file, reads it row by row, and looks for a matching team_number.
     """
     try:
-        # Open the CSV file in read mode
-        with open(CSV_PATH, mode='r', encoding='utf-8') as file:
+        # Note: Using utf-8-sig to avoid the hidden Windows BOM character issue
+        with open(CSV_PATH, mode='r', encoding='utf-8-sig') as file:
             reader = csv.DictReader(file)
             
             for row in reader:
