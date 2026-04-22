@@ -1,7 +1,7 @@
 {
 	"folders": {},
 	"connections": {
-		"sqlite_jdbc-19db6b34855-2fdffbb843c29892": {
+		"sqlite_jdbc-19db6bfe496-6061eec86626851b": {
 			"provider": "sqlite",
 			"driver": "sqlite_jdbc",
 			"name": "hcd",
