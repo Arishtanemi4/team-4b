@@ -14,6 +14,7 @@ ROOT_DIR = os.path.dirname(BACKEND_DIR)
 # 4. Point into the 'db' folder and select 'hcd.db'
 DB_PATH = os.path.join(ROOT_DIR, 'db', 'hcd.db')
 
+
 def get_team_data_from_db(team_number: str):
     """
     Connects to SQLite and fetches the password_hash and team_name 
