@@ -1,17 +1,18 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import "../App.css";
 
 export default function MetricCard({ title, icon, value, subtitle }) {
   return (
     <Card>
-      <CardHeader style={{ textAlign: "center" }}>
+      <CardHeader className="text-center">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px" }}>
+      <CardContent className="metric-card-content">
         {icon}
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "1.875rem", fontWeight: "bold" }}>{value}</div>
-          {subtitle && <div style={{ fontSize: "0.875rem", color: "#64748b" }}>{subtitle}</div>}
+        <div className="text-center">
+          <div className="metric-card-value">{value}</div>
+          {subtitle && <div className="metric-card-subtitle">{subtitle}</div>}
         </div>
       </CardContent>
     </Card>
