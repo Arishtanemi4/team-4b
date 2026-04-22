@@ -1,14 +1,14 @@
 {
 	"folders": {},
 	"connections": {
-		"sqlite_jdbc-19db6bfe496-6061eec86626851b": {
+		"sqlite_jdbc-19db6c5f7b3-34b35da1d7e56014": {
 			"provider": "sqlite",
 			"driver": "sqlite_jdbc",
-			"name": "hcd",
+			"name": "hcd.db",
 			"save-password": true,
 			"configuration": {
-				"database": "E:\\hackathon\\team-4b\\db\\hcd",
-				"url": "jdbc:sqlite:E:\\hackathon\\team-4b\\db\\hcd",
+				"database": "E:\\hackathon\\team-4b\\db\\hcd.db",
+				"url": "jdbc:sqlite:E:\\hackathon\\team-4b\\db\\hcd.db",
 				"configurationType": "MANUAL",
 				"type": "dev",
 				"closeIdleConnection": true,
