@@ -1,25 +1,116 @@
-/* --- Navigation Styles --- */
-.app-nav {
-  background-color: white;
-  padding: 16px 24px;
+/* --- App Layout & Sidebar Styles --- */
+.app-container {
   display: flex;
-  gap: 16px;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  border-radius: 16px;
-  margin-bottom: 24px;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
+  min-height: 100vh;
+  background-color: #f1f5f9;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-.nav-link {
-  text-decoration: none;
-  color: #475569;
-  font-weight: 600;
-  padding: 8px 16px;
+.sidebar {
+  background-color: #1e293b; /* Dark slate background */
+  color: white;
+  transition: width 0.3s ease;
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+  z-index: 50;
+}
+
+.sidebar.collapsed {
+  width: 68px;
+}
+
+.sidebar-header {
+  height: 68px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-bottom: 1px solid #334155;
+  white-space: nowrap;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
   border-radius: 8px;
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.2s;
+}
+
+.menu-btn:hover {
+  background-color: #334155;
+}
+
+.brand-text {
+  margin-left: 12px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: opacity 0.2s;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0;
+  gap: 8px;
+}
+
+.sidebar-link {
+  text-decoration: none;
+  color: #cbd5e1;
+  padding: 12px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  border-left: 4px solid transparent;
+}
+
+.sidebar-link:hover {
+  background-color: #334155;
+  color: white;
+}
+
+.sidebar-link.active {
+  background-color: #2563eb; /* Blue highlight */
+  color: white;
+  border-left-color: #60a5fa;
+}
+
+.link-text {
+  transition: opacity 0.2s;
+}
+
+/* Hide text when collapsed */
+.sidebar.collapsed .link-text,
+.sidebar.collapsed .brand-text {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- Main Content Area --- */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.main-padding {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .nav-link:hover {
@@ -395,3 +486,104 @@
 .lbl-tl { top: 40px; left: 60px; }
 .lbl-tr { top: 40px; right: 40px; text-align: right;}
 .lbl-bl { bottom: 60px; left: 60px; }
+
+
+
+/* --- Login Page Styles --- */
+.login-page-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f1f5f9;
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.login-header {
+  text-align: center;
+  padding: 24px 24px 16px 24px;
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 24px 24px 24px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 12px;
+  background-color: #f8fafc;
+  transition: border-color 0.2s;
+}
+
+.input-wrapper:focus-within {
+  border-color: #2563eb;
+  background-color: white;
+}
+
+.input-icon {
+  color: #94a3b8;
+  margin-right: 8px;
+}
+
+.custom-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 12px 0;
+  font-size: 1rem;
+  color: #1e293b;
+  outline: none;
+}
+
+.custom-input::placeholder {
+  color: #94a3b8;
+}
+
+.login-btn {
+  width: 100%;
+  background-color: #2563eb; /* Blue to match the active tab */
+  margin-top: 8px;
+}
+
+.login-btn:hover {
+  background-color: #1d4ed8;
+}
