@@ -5,6 +5,11 @@ from pydantic import BaseModel
 import pandas as pd
 from services.auth import process_authentication
 
+from services.call_llm_api import check_api_keys, get_analytics_insights as get_api_insights
+from services.call_llama3 import check_ollama_running, check_llama3_available, get_analytics_insights as get_llama_insights
+from fastapi.responses import StreamingResponse
+
+
 # Import all portfolio manager functions
 from services.portfolio_manager import (
     need_support, team_trend, avg_health,
@@ -135,3 +140,69 @@ async def get_team_mood_tracker(team_id: str = Path(..., description="The ID or 
 async def get_team_solution_strength(team_id: str = Path(..., description="The ID or string identifier of the team")):
     real_id = resolve_team_id(team_id)
     return solution_strength(real_id)
+
+
+
+async def ai_insights_stream():
+    """Main function to determine which AI to use and stream insights"""
+    
+    # Step 1: Check if LLM APIs are available
+    try:
+        available_apis = check_api_keys()
+        
+        if available_apis:
+            prompt = """Analyze the team survey data and provide comprehensive insights about:
+1. Team morale and engagement trends
+2. Stress levels and burnout indicators
+3. Collaboration and communication effectiveness
+4. Leadership support and confidence
+5. Productivity and delivery confidence
+6. Key recommendations for improvement
+
+Format the response with clear sections and actionable insights."""
+            
+            insights = get_api_insights(prompt)
+            if insights:
+                for chunk in insights:
+                    yield chunk
+                return
+    except Exception as e:
+        print(f"LLM API check failed: {e}")
+    
+    # Step 2: Check if local Llama3 is available
+    try:
+        if check_ollama_running() and check_llama3_available():
+            prompt = """Analyze the team survey data and provide comprehensive insights about:
+1. Team morale and engagement trends
+2. Stress levels and burnout indicators
+3. Collaboration and communication effectiveness
+4. Leadership support and confidence
+5. Productivity and delivery confidence
+6. Key recommendations for improvement
+
+Format the response with clear sections and actionable insights."""
+            
+            insights = get_llama_insights(prompt)
+            if insights:
+                for chunk in insights:
+                    yield chunk
+                return
+    except Exception as e:
+        print(f"Llama3 check failed: {e}")
+    
+    # Step 3: Fallback to text file streaming
+    try:
+        with open("../frontend/public/analytics_ai.txt", 'r') as f:
+            content = f.read()
+            for char in content:
+                yield char
+    except Exception as e:
+        yield f"Error reading analytics file: {str(e)}"
+
+@app.get("/api/analytics/insights")
+async def get_insights():
+    """Endpoint to stream AI insights"""
+    return StreamingResponse(
+        ai_insights_stream(),
+        media_type="text/plain"
+    )
