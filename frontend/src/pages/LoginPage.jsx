@@ -27,16 +27,26 @@ export default function LoginPage({ onLogin }) {
       const data = await response.json();
 
       if (response.ok) {
-        // Extract team_anon_number from the response - this is what we need for API calls
-        const teamAnonNumber = data?.data?.team_anon_number;
+        // Extract role from the response (required for all users)
+        const userRole = data?.data?.role;
         
-        if (teamAnonNumber === null || teamAnonNumber === undefined) {
-          setError("Authentication failed: Missing team ID in response.");
+        if (!userRole) {
+          setError("Authentication failed: Missing role information.");
           return;
         }
         
-        // Pass the team_anon_number up to App.js!
-        onLogin(teamAnonNumber);
+        // Extract team_anon_number only for members (managers don't need it)
+        let teamAnonNumber = null;
+        if (userRole === "member") {
+          teamAnonNumber = data?.data?.team_anon_number;
+          if (teamAnonNumber === null || teamAnonNumber === undefined) {
+            setError("Authentication failed: Missing team ID for member account.");
+            return;
+          }
+        }
+        
+        // Pass team_anon_number (can be null for managers) and role to App.js
+        onLogin(teamAnonNumber, userRole);
       } else {
         // Backend rejected the login
         setError(data.message || "Invalid team number or password.");

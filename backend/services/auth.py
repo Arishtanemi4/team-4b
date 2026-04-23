@@ -18,7 +18,7 @@ CSV_PATH = os.path.join(ROOT_DIR, 'db', 'users.csv')
 def get_team_data_from_csv(team_number: str):
     """
     Opens the CSV file, reads it row by row, and looks for a matching team_number.
-    Returns: (password_hash, team_name, team_anon_number)
+    Returns: (password_hash, team_name, team_anon_number, role)
     """
     try:
         # Note: Using utf-8-sig to avoid the hidden Windows BOM character issue
@@ -34,7 +34,9 @@ def get_team_data_from_csv(team_number: str):
                     except ValueError:
                         team_anon_number = None
                     
-                    return row['password_hash'], row['team_name'], team_anon_number
+                    role = row.get('role', 'member').lower()  # Default to 'member' if not specified
+                    
+                    return row['password_hash'], row['team_name'], team_anon_number, role
                     
     except FileNotFoundError:
         print(f"Error: Could not find CSV at {CSV_PATH}")
@@ -47,7 +49,8 @@ def get_team_data_from_csv(team_number: str):
 def process_authentication(team_number: str, provided_password_hash: str) -> dict:
     """
     Authenticates by comparing the provided hash against the CSV data.
-    Returns the team_anon_number needed for API calls.
+    Returns the team_anon_number (for members) and role for frontend routing.
+    Managers don't need team_anon_number since they only access Portfolio endpoints.
     """
     # 1. Fetch the data using the new CSV function
     result = get_team_data_from_csv(team_number)
@@ -56,16 +59,22 @@ def process_authentication(team_number: str, provided_password_hash: str) -> dic
     if not result:
         raise HTTPException(status_code=401, detail="Invalid team number or password")
         
-    stored_db_hash, team_name, team_anon_number = result
+    stored_db_hash, team_name, team_anon_number, role = result
         
     # 3. Direct string comparison
     if provided_password_hash != stored_db_hash:
         raise HTTPException(status_code=401, detail="Invalid team number or password")
     
-    # 4. Success! Return both team_number and team_anon_number
-    return {
+    # 4. Success! Build response with role-appropriate fields
+    response = {
         "team_number": team_number,
-        "team_anon_number": team_anon_number,  # <-- This is what the frontend needs for API calls
         "team_name": team_name,
+        "role": role,
         "status": "Authentication successful"
     }
+    
+    # 5. Only include team_anon_number for members (they need it for TeamView APIs)
+    if role == "member" and team_anon_number is not None:
+        response["team_anon_number"] = team_anon_number
+    
+    return response

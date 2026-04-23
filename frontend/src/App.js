@@ -8,7 +8,7 @@ import LoginPage from "./pages/LoginPage";
 import "./App.css";
 
 // --- Sidebar Component ---
-function Sidebar({ isOpen, toggleSidebar, onLogout }) {
+function Sidebar({ isOpen, toggleSidebar, onLogout, userRole }) {
   return (
     <aside className={`sidebar ${isOpen ? "expanded" : "collapsed"}`}>
       <div className="sidebar-header">
@@ -19,22 +19,28 @@ function Sidebar({ isOpen, toggleSidebar, onLogout }) {
       </div>
       
       <nav className="sidebar-nav" style={{ flex: 1 }}>
-        <NavLink 
-          to="/" 
-          className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"} 
-          end
-        >
-          <Users size={20} />
-          <span className="link-text">Team View</span>
-        </NavLink>
+        {/* Members see TeamView */}
+        {userRole === "member" && (
+          <NavLink 
+            to="/" 
+            className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"} 
+            end
+          >
+            <Users size={20} />
+            <span className="link-text">Team View</span>
+          </NavLink>
+        )}
         
-        <NavLink 
-          to="/portfolio" 
-          className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}
-        >
-          <Briefcase size={20} />
-          <span className="link-text">Portfolio Manager</span>
-        </NavLink>
+        {/* Managers see PortfolioManagerView */}
+        {userRole === "manager" && (
+          <NavLink 
+            to="/" 
+            className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}
+          >
+            <Briefcase size={20} />
+            <span className="link-text">Portfolio Manager</span>
+          </NavLink>
+        )}
       </nav>
 
       <div style={{ padding: "16px 0", borderTop: "1px solid #334155" }}>
@@ -55,20 +61,23 @@ function Sidebar({ isOpen, toggleSidebar, onLogout }) {
 export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
-  // State for authentication and storing the logged-in team's anon ID
+  // State for authentication, team ID, and user role
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentTeamId, setCurrentTeamId] = useState(null); // <-- This is now team_anon_number
+  const [currentTeamId, setCurrentTeamId] = useState(null);
+  const [userRole, setUserRole] = useState(null); // <-- NEW: Store user role
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-  // Update handleLogin to accept the team_anon_number from the login page
-  const handleLogin = (teamAnonNumber) => {
-    setCurrentTeamId(teamAnonNumber);
+  // Update handleLogin to accept both team_anon_number (can be null for managers) and role
+  const handleLogin = (teamAnonNumber, role) => {
+    setCurrentTeamId(teamAnonNumber);  // Will be null for managers, integer for members
+    setUserRole(role);
     setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
     setCurrentTeamId(null);
+    setUserRole(null);
     setIsAuthenticated(false);
   };
 
@@ -80,14 +89,26 @@ export default function App() {
         </Routes>
       ) : (
         <div className="app-container">
-          <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} onLogout={handleLogout} />
+          <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} onLogout={handleLogout} userRole={userRole} />
           <main className="main-content">
             <div className="main-padding">
               <Routes>
-                {/* Pass the team_anon_number (integer ID) down as a prop */}
-                <Route path="/" element={<TeamView teamId={currentTeamId} />} />
-                <Route path="/portfolio" element={<PortfolioManagerView />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                {/* Role-based routing: members see TeamView, managers see PortfolioManagerView */}
+                {userRole === "member" ? (
+                  <>
+                    <Route path="/" element={<TeamView teamId={currentTeamId} />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </>
+                ) : userRole === "manager" ? (
+                  <>
+                    <Route path="/" element={<PortfolioManagerView />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </>
+                ) : (
+                  <>
+                    <Route path="*" element={<Navigate to="/login" replace />} />
+                  </>
+                )}
               </Routes>
             </div>
           </main>
