@@ -73,9 +73,18 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   // State for authentication, team ID, and user role
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentTeamId, setCurrentTeamId] = useState(null);
-  const [userRole, setUserRole] = useState(null); // <-- NEW: Store user role
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const stored = localStorage.getItem("isAuthenticated");
+    return stored ? JSON.parse(stored) : false;
+  });
+  const [currentTeamId, setCurrentTeamId] = useState(() => {
+    const stored = localStorage.getItem("currentTeamId");
+    return stored ? JSON.parse(stored) : null;
+  });
+  const [userRole, setUserRole] = useState(() => {
+    const stored = localStorage.getItem("userRole");
+    return stored ? JSON.parse(stored) : null;
+  });
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -84,12 +93,22 @@ export default function App() {
     setCurrentTeamId(teamAnonNumber);  // Will be null for managers, integer for members
     setUserRole(role);
     setIsAuthenticated(true);
+    
+    // Persist to localStorage
+    localStorage.setItem("currentTeamId", JSON.stringify(teamAnonNumber));
+    localStorage.setItem("userRole", JSON.stringify(role));
+    localStorage.setItem("isAuthenticated", JSON.stringify(true));
   };
 
   const handleLogout = () => {
     setCurrentTeamId(null);
     setUserRole(null);
     setIsAuthenticated(false);
+    
+    // Clear localStorage
+    localStorage.removeItem("currentTeamId");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("isAuthenticated");
   };
 
   return (
