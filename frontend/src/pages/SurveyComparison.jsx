@@ -4,8 +4,8 @@ import { X, ZoomIn, ZoomOut, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, 
 const imagesByTab = {
   "2": ["/image1.jpeg", "/image2.jpeg", "/image3.jpeg"],
   "3": ["/image4.jpeg", "/image5.jpeg", "/image6.jpeg"],
-  "4": ["/image4.jpeg", "/image5.jpeg", "/image6.jpeg"],
-  "5": ["/image4.jpeg", "/image5.jpeg", "/image6.jpeg"],
+  "4": ["/image7.jpeg", "/image8.jpeg", "/image9.jpeg"],
+  "5": ["/db/image1.png", "/db/image2.png", "/db/image3.png"],
 };
 
 function AISidebar({ isOpen, onClose }) {
@@ -425,34 +425,35 @@ export default function SurveyComparison() {
   const currentImages = imagesByTab[activeTab] || [];
 
   return (
-    <div className="app-inner" style={{ position: "relative" }}>
-      <button
-        onClick={() => setSidebarOpen(true)}
-        style={{
-          position: "absolute",
-          top: "20px",
-          right: "20px",
-          background: "#3b82f6",
-          border: "none",
-          cursor: "pointer",
-          color: "#ffffff",
-          padding: "10px 16px",
-          borderRadius: "6px",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          fontSize: "14px",
-          fontWeight: "600",
-          transition: "background 0.3s",
-          zIndex: 10,
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.background = "#2563eb"}
-        onMouseLeave={(e) => e.currentTarget.style.background = "#3b82f6"}
-      >
-        <Sparkles size={18} />
-        AI Insights
-      </button>
-      <div className="app-banner">Survey Comparison Analysis</div>
+    <div className="app-inner">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        <div className="app-banner">Survey Comparison Analysis</div>
+        <button
+          onClick={() => setSidebarOpen(true)}
+          style={{
+            background: "#3b82f6",
+            border: "none",
+            cursor: "pointer",
+            color: "#ffffff",
+            padding: "10px 16px",
+            borderRadius: "6px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "14px",
+            fontWeight: "600",
+            transition: "background 0.3s",
+            zIndex: 10,
+            whiteSpace: "nowrap",
+            marginLeft: "20px",
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = "#2563eb"}
+          onMouseLeave={(e) => e.currentTarget.style.background = "#3b82f6"}
+        >
+          <Sparkles size={18} />
+          AI Insights
+        </button>
+      </div>
 
       <div style={{ 
         display: "flex", 
@@ -461,7 +462,7 @@ export default function SurveyComparison() {
         borderBottom: "1px solid #cbd5e1",
         padding: "0 0 16px 0"
       }}>
-        {["2", "3", "4", "5"].map((tab) => (
+        {["2", "3", "4"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}

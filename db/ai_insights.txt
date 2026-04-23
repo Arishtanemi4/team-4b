@@ -1,0 +1,51 @@
+The big picture has shifted
+The portfolio has moved decisively into execution mode between Surveys 2 and 3, and the tone of the data has changed. Where S1→S2 showed teams settling and calibrating, S2→S3 shows teams delivering — Productivity is up 7.6 points (the largest single-metric jump across the Hack), Solution Fit up 5.8, Team Access up 5.8, Leadership up 4.9. Collaboration, Capability, Wellbeing, Priorities and Ambition are all rising too. This is what a portfolio in flow looks like.
+But the picture is genuinely mixed: Cognitive Load has risen in 12 of 18 teams that have data across all three surveys, and the gap between the top band and the bottom band has widened sharply. The briefing below focuses on what that means for Capability Support's final-push interventions, and — because we now have three survey waves with real variation — the first defensible shape of a winning-team prediction.
+Data caveats still apply: Team 23 has fully dropped out (6→5→0 respondents), Team 34 abandoned after S1, and Teams 4, 19, 6, 13, 18 and 24 all show meaningful participation decay.
+
+
+1. The portfolio has separated into four clear bands
+Using the composite of twelve performance metrics at Survey 3, teams now cluster into distinct groups — not the tidy three bands of S2, but four meaningfully different profiles:
+Leaders (composite 77+): Teams 22, 24, 17, 19, 12, 16, 6. All sitting above 75, most with strong S2→S3 momentum. Team 22's composite of 91.7 is the highest in the portfolio, though note this is from a single respondent so the confidence band is wide.
+Contenders (composite 70–77): Teams 35, 13, 1, 5, 2. Mixed trajectories — some climbing (35, 1, 5), some slipping (13). This band is where Capability Support interventions have the highest marginal value.
+Middle (composite 58–70): Teams 25, 27, 3, 11. Plateau or gentle decline. Not in crisis, but not tracking toward a podium finish either.
+At-risk (composite below 58): Teams 18, 26, 4. All three declined from S2. Team 4 remains the most serious concern in the portfolio.
+Dropped out: Teams 23 and 34. Team 23 is the more significant loss — they were providing useful data through S2 (composite 58) before disappearing.
+
+2. The three most important shifts since the last briefing
+Team 24 has broken out — the standout rise of the Hack
+At Survey 2, Team 24 was in the middle band (composite 69.1). At Survey 3, they are at 87.9 — a +18.8 move, the largest positive shift in the portfolio. They now post the highest Beneficial score (100), highest Solution Fit (96.5), highest Ambition (95) and highest Innovation (96) of any team with meaningful respondent count. This is not a team that needs support — it is a team that has likely found something, and the Capability Support Team should treat them as a case study rather than an intervention target.
+Team 19 has recovered strongly
+Team 19 was a concern in the S1–S2 briefing — stagnant trajectory, high internal variance (25.2 — the highest in the portfolio). At S3 they are up to composite 82.1, +16.1 momentum, variance dropped to 13.9, Wellbeing jumped an extraordinary 26.9 points. Whatever alignment happened inside Team 19 between surveys worked. However, their respondent count dropped from 7 to 4 — so part of this recovery may reflect the disaffected members self-selecting out rather than genuine team improvement. Worth a direct check at Survey 4.
+Team 17 has plateaued at the top
+Team 17 was the S1→S2 momentum leader (+16.9). They held that position at S3 (composite 83.6), but the cognitive-load spike flagged last time has now reversed sharply (73.2 → 55.0, a −18.2 drop). Wellbeing rose 14.4 points. This is a team that was running hot and has now settled into a sustainable pace. They are currently the most credible frontrunner from a dynamics standpoint.
+
+
+3. Solution Fit, Beneficial and Commercial App. — the new leading indicators
+Survey 3 introduced two new metrics — Beneficial and Commercial App. — and these, combined with Solution Fit, now give the first view of which teams' solutions are actually landing. The three metrics together form an early "judgeable output" signature:
+Top of the Beneficial + Commercial App. rankings: Teams 24, 22, 25, 19, 17.
+The most informative finding is where Beneficial diverges from the overall composite: Team 25 scores 67.5 on the composite (middle band) but 89.0 on Beneficial and 84.0 on Commercial App. — which suggests their solution is stronger than their team dynamics. Team 1 shows the opposite pattern (composite 72.9, Beneficial only 68.0) — a team that is healthy but whose solution may not yet land.
+Solution Fit also tells a story of divergence. Teams 24 (+27.0), 17 (+28.2), 27 (+22.4) have clarified sharply. Teams 26 (−18.7), 18 (−16.7), 3 (−11.8) have lost conviction in their solution since S2 — that is often the precursor to a team pivoting late or giving up on their original direction. These three teams warrant a direct coaching conversation before Survey 4.
+4. Cognitive Load — a widespread and worsening stressor
+Cognitive load has risen in 12 of 18 teams with complete data. The portfolio average is now 66.3, up from 61.9 at S1. Six teams now sit above 75:
+
+Team 25: 83.0, Team 12: 84.7, Team 6: 80.0, Team 13: 78.5, Team 19: 78.0, Team 24: 75.0.
+
+Pair this with the composite trajectory: Team 12 is declining slightly while cognitive load climbs — the classic "stress up, output down" pattern flagged as a warning in the last briefing. Team 12 should be the headline concern of this briefing. They started at the top (S1 composite 84.0) and have slipped gently every survey since, while stress has risen every survey. Wellbeing also now down 8 points. The team is not yet in trouble, but the direction is unmistakable.
+Team 13 shows the largest cognitive-load jump of the wave (+19.8) alongside a composite decline — second warning signal to address.
+5. Internal disagreement — where teams are fracturing
+Within-team variance on performance metrics at S3:
+
+Team 26: 22.1 — highest in the portfolio. Paired with a composite decline of −8.9, a Wellbeing drop of −11.5, and a Solution Fit drop of −18.7. This is a team visibly coming apart, and the metrics are consistent across multiple dimensions (not just one person pulling down the average).
+Team 2: 20.6 — high variance but reasonable composite. Mixed picture; members experiencing the project differently.
+Team 12: 19.1 — reinforces the cognitive-load warning. Members seeing the same team very differently.
+Team 11: 15.8, Team 4: 15.4 — moderate fracture signals; Team 4 especially given low absolute composite.
+
+Team 26 is the most urgent intervention target of this briefing alongside Team 4 (which remains in decline).
+6. Participation patterns — signal in their own right
+Real dropout is now visible and should inform both intervention priority and any future predictive model:
+
+Team 23 — full dropout at S3. Was providing 5–6 respondents at S1/S2; zero at S3. A direct re-engagement call is warranted.
+Team 34 — dropped after S1. No responses at S2 or S3. Likely fully disengaged.
+Team 16 — re-engaged at S3 after a zero-response S2. Composite 77.5 on return; solid numbers. A positive recovery that shouldn't be overlooked.
+Team 19 (7→7→4), Team 6 (6→4→3), Team 4 (8→6→4) — gradual attrition. In Team 19's case paired with improving metrics (possibly selection bias). In Team 4's case paired with worsening metrics — a compounding problem.
