@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { X, ZoomIn, ZoomOut, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, ZoomIn, ZoomOut, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Sparkles, Loader2 } from "lucide-react";
 
 const imagesByTab = {
   "2": ["/image1.jpeg", "/image2.jpeg", "/image3.jpeg"],
@@ -7,6 +7,114 @@ const imagesByTab = {
   "4": ["/image4.jpeg", "/image5.jpeg", "/image6.jpeg"],
   "5": ["/image4.jpeg", "/image5.jpeg", "/image6.jpeg"],
 };
+
+function AISidebar({ isOpen, onClose }) {
+  const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen) {
+      setLoading(true);
+      setContent("");
+      
+      fetch("/analytics_ai.txt")
+        .then(res => res.text())
+        .then(text => {
+          let index = 0;
+          const interval = setInterval(() => {
+            if (index < text.length) {
+              setContent(prev => prev + text[index]);
+              index++;
+            } else {
+              clearInterval(interval);
+              setLoading(false);
+            }
+          }, 20);
+        })
+        .catch(err => {
+          setContent("Error loading analytics AI insights");
+          setLoading(false);
+          console.error(err);
+        });
+    }
+  }, [isOpen]);
+
+  return (
+    <>
+      {isOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 999,
+          }}
+          onClick={onClose}
+        />
+      )}
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          width: "400px",
+          height: "100vh",
+          backgroundColor: "#1e293b",
+          boxShadow: "-2px 0 8px rgba(0, 0, 0, 0.3)",
+          transform: isOpen ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.3s ease",
+          zIndex: 1000,
+          display: "flex",
+          flexDirection: "column",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{
+          padding: "20px",
+          borderBottom: "1px solid #334155",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Sparkles size={20} color="#3b82f6" />
+            <h2 style={{ color: "#f8fafc", fontSize: "18px", fontWeight: "bold", margin: 0 }}>
+              AI Insights
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#94a3b8",
+            }}
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <div style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "20px",
+          color: "#e2e8f0",
+          fontSize: "14px",
+          lineHeight: "1.6",
+          whiteSpace: "pre-wrap",
+          wordWrap: "break-word",
+        }}>
+          {loading && <Loader2 className="animate-spin" size={20} />}
+          {content}
+        </div>
+      </div>
+    </>
+  );
+}
 
 function ImageGallery({ images }) {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -313,10 +421,37 @@ function ImageGallery({ images }) {
 
 export default function SurveyComparison() {
   const [activeTab, setActiveTab] = useState("2");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const currentImages = imagesByTab[activeTab] || [];
 
   return (
-    <div className="app-inner">
+    <div className="app-inner" style={{ position: "relative" }}>
+      <button
+        onClick={() => setSidebarOpen(true)}
+        style={{
+          position: "absolute",
+          top: "20px",
+          right: "20px",
+          background: "#3b82f6",
+          border: "none",
+          cursor: "pointer",
+          color: "#ffffff",
+          padding: "10px 16px",
+          borderRadius: "6px",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          fontSize: "14px",
+          fontWeight: "600",
+          transition: "background 0.3s",
+          zIndex: 10,
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.background = "#2563eb"}
+        onMouseLeave={(e) => e.currentTarget.style.background = "#3b82f6"}
+      >
+        <Sparkles size={18} />
+        AI Insights
+      </button>
       <div className="app-banner">Survey Comparison Analysis</div>
 
       <div style={{ 
@@ -364,6 +499,8 @@ export default function SurveyComparison() {
           <ImageGallery images={currentImages} />
         </div>
       </div>
+
+      <AISidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
     </div>
   );
 }
