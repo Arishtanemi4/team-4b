@@ -24,7 +24,6 @@ import pandas as pd
 # Configuration — the semantic grouping of metrics
 # =============================================================================
 
-# Behavioural health: how the team is functioning as a working unit.
 BEHAVIOUR_METRICS = [
     'Wellbeing', 'Team Access', 'Productivity',
     'Capacity', 'Capability', 'Collaboration',
@@ -32,36 +31,22 @@ BEHAVIOUR_METRICS = [
     'Priorities', 'Leadership',
 ]
 
-# Delivery confidence: how the solution is coming along.
 DELIVERY_METRICS = [
     'Solution Fit', 'Innovation', 'Ambition',
     'Commercial App.', 'Beneficial', 'Presentation',
 ]
 
-# Metrics where high = bad. We reverse-code these so "higher is better" holds uniformly.
-# Kept separate from value-vs-risk banding so we can be explicit everywhere.
 REVERSED_METRICS = {'Cognitive Load'}
 
-# Heatmap metrics shown in the mock (subset of behaviour metrics).
 HEATMAP_METRICS = [
     'Wellbeing', 'Team Access', 'Productivity',
     'Capacity', 'Collaboration', 'Psych. Safety', 'Cognitive Load',
 ]
 
-# Risk-band thresholds on the 0..100 "higher is better" scale.
-#   value >= GREEN_THRESHOLD       → 'green'
-#   AMBER_THRESHOLD <= value < GREEN  → 'amber'
-#   value < AMBER_THRESHOLD        → 'red'
 GREEN_THRESHOLD = 60
 AMBER_THRESHOLD = 45
-
-# A team "needs support" if its latest-survey behaviour health is below this.
 SUPPORT_THRESHOLD = 50
-
-# "Trending down" = latest-wave score dropped by at least this much vs the prior wave.
 TRENDING_DOWN_DELTA = 3.0
-
-# For `alert()`: how large a wave-over-wave drop or gain counts as a "notable event"?
 ALERT_DROP_DELTA = 5.0
 ALERT_RECOVERY_DELTA = 5.0
 
@@ -70,25 +55,51 @@ ALERT_RECOVERY_DELTA = 5.0
 # Shared helpers
 # =============================================================================
 
-# 1. Get the directory of the current file (.../root/backend/services)
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# 2. Go up one level to the 'backend' directory (.../root/backend)
 BACKEND_DIR = os.path.dirname(CURRENT_DIR)
-
-# 3. Go up one MORE level to your project 'root' directory (.../root)
 ROOT_DIR = os.path.dirname(BACKEND_DIR)
 
-# 4. Point into the root's 'db' folder and target 'users.csv'
 _DEFAULT_PATH = os.path.join(ROOT_DIR, 'db', 'dashboard_data.csv')
+
+# Fixed filename spacing to match the DB folder exactly
+_DEFAULT_MAPPING_PATH = os.path.join(ROOT_DIR, 'db', 'Anon link to Team name v01.xlsx')
+_MAPPING_SHEET = 'Hack27 Teams'
+
+_team_room_cache: dict[int, str] | None = None
+
+
+def _load_team_room_mapping(path: str | None = None) -> dict[int, str]:
+    global _team_room_cache
+    if _team_room_cache is not None:
+        return _team_room_cache
+
+    mapping_path = path or _DEFAULT_MAPPING_PATH
+    try:
+        df = pd.read_excel(mapping_path, sheet_name=_MAPPING_SHEET)
+    except (FileNotFoundError, ValueError) as e:
+        print(f'[portfolio_manager] team-room mapping unavailable ({e}); '
+              f'using "Team {{id}}" placeholders.')
+        _team_room_cache = {}
+        return _team_room_cache
+
+    if 'Anon Team' not in df.columns or 'Team Room' not in df.columns:
+        print(f'[portfolio_manager] mapping file missing expected columns; '
+              f'using "Team {{id}}" placeholders.')
+        _team_room_cache = {}
+        return _team_room_cache
+
+    usable = df.dropna(subset=['Anon Team', 'Team Room']).copy()
+    usable['Anon Team'] = usable['Anon Team'].astype(int)
+    usable['Team Room'] = usable['Team Room'].astype(str).str.strip()
+    usable = usable[usable['Team Room'] != '']
+
+    _team_room_cache = dict(zip(usable['Anon Team'], usable['Team Room']))
+    return _team_room_cache
 
 
 def _load(path: str | None = None) -> pd.DataFrame:
-    """Load the CSV and normalise reverse-coded metrics so higher = better."""
     path = path or _DEFAULT_PATH
     df = pd.read_csv(path)
-    # Reverse-code any "high = bad" metrics so every value reads as "higher = better".
-    # This keeps all downstream aggregation logic uniform.
     df.loc[df['metric'].isin(REVERSED_METRICS), 'value'] = (
         100 - df.loc[df['metric'].isin(REVERSED_METRICS), 'value']
     )
@@ -100,12 +111,11 @@ def _latest_survey(df: pd.DataFrame) -> int:
 
 
 def _team_label(team_id: int) -> str:
-    """Human-friendly team label. Frontend can override with a mapping if desired."""
-    return f'Team {team_id}'
+    mapping = _load_team_room_mapping()
+    return mapping.get(int(team_id), f'Team {team_id}')
 
 
 def _band(value: float) -> str:
-    """Return 'green' / 'amber' / 'red' for a 0..100 value."""
     if pd.isna(value):
         return 'unknown'
     if value >= GREEN_THRESHOLD:
@@ -116,7 +126,6 @@ def _band(value: float) -> str:
 
 
 def _trend_arrow(delta: float, eps: float = 1.0) -> str:
-    """Map a change to one of three arrow directions."""
     if delta > eps:
         return 'up'
     if delta < -eps:
@@ -125,46 +134,31 @@ def _trend_arrow(delta: float, eps: float = 1.0) -> str:
 
 
 def _team_score(df: pd.DataFrame, team: int, survey: int, metrics: list[str]) -> float | None:
-    """Mean value for a (team, survey, metric-subset), or None if no data."""
     sub = df[(df['team'] == team) & (df['survey'] == survey) & (df['metric'].isin(metrics))]
     return float(sub['value'].mean()) if not sub.empty else None
 
 
 def _portfolio_score(df: pd.DataFrame, survey: int, metrics: list[str]) -> float | None:
-    """Portfolio-wide mean across all teams for a (survey, metric-subset)."""
     sub = df[(df['survey'] == survey) & (df['metric'].isin(metrics))]
     return float(sub['value'].mean()) if not sub.empty else None
 
 
 # =============================================================================
-# 1. Teams Needing Support  (top-left KPI)
+# 1. Teams Needing Support
 # =============================================================================
 
 def need_support(path: str | None = None) -> dict:
-    """
-    Number of teams with low behaviour health on the latest survey, plus whether
-    that count is rising or falling vs the previous survey.
-
-    Returns
-    -------
-    {
-        'count': int,                       # teams flagged as needing support *now*
-        'previous_count': int,              # same flag one survey ago
-        'trend': 'up' | 'down' | 'flat',    # direction of the count (up = more teams struggling)
-        'threshold': float,                 # behaviour health below which a team is flagged
-        'teams': [int, ...],                # team IDs currently flagged
-    }
-    """
     df = _load(path)
     latest = _latest_survey(df)
     prev = latest - 1
 
-    def flagged(survey: int) -> list[int]:
+    def flagged(survey: int) -> list[dict]:
         teams = []
         for t in sorted(df['team'].unique()):
             score = _team_score(df, t, survey, BEHAVIOUR_METRICS)
             if score is not None and score < SUPPORT_THRESHOLD:
-                teams.append(int(t))
+                # Updated to provide the actual mapped label
+                teams.append({'team': int(t), 'team_label': _team_label(t)})
         return teams
 
     now_teams = flagged(latest)
@@ -180,24 +174,10 @@ def need_support(path: str | None = None) -> dict:
 
 
 # =============================================================================
-# 2. Teams Trending Down  (second KPI)
+# 2. Teams Trending Down
 # =============================================================================
 
 def team_trend(path: str | None = None) -> dict:
-    """
-    Teams whose overall (behaviour + delivery) score dropped meaningfully on the
-    latest survey vs the previous survey.
-
-    Returns
-    -------
-    {
-        'count': int,                       # teams trending down right now
-        'previous_count': int,              # teams trending down one wave ago
-        'trend': 'up' | 'down' | 'flat',    # direction of the *count* (up = more teams slipping)
-        'delta_threshold': float,           # drop required (score points) to count as trending down
-        'teams': [{'team': int, 'current': float, 'previous': float, 'delta': float}, ...],
-    }
-    """
     df = _load(path)
     latest = _latest_survey(df)
     prev = latest - 1
@@ -216,6 +196,7 @@ def team_trend(path: str | None = None) -> dict:
             if delta <= -TRENDING_DOWN_DELTA:
                 result.append({
                     'team': int(t),
+                    'team_label': _team_label(t), # Updated mapping
                     'current': round(b, 1),
                     'previous': round(a, 1),
                     'delta': round(delta, 1),
@@ -235,24 +216,10 @@ def team_trend(path: str | None = None) -> dict:
 
 
 # =============================================================================
-# 3. Avg Behaviour Health  (third KPI)
+# 3. Avg Behaviour Health
 # =============================================================================
 
 def avg_health(path: str | None = None) -> dict:
-    """
-    Portfolio-wide average behaviour health on the latest survey, with
-    comparison arrow vs the previous survey.
-
-    Returns
-    -------
-    {
-        'value': float,                     # portfolio mean, 0..100, rounded
-        'previous': float,                  # same mean one survey ago
-        'delta': float,                     # current - previous
-        'trend': 'up' | 'down' | 'flat',
-        'band': 'green' | 'amber' | 'red',  # colour for the big number
-    }
-    """
     df = _load(path)
     latest = _latest_survey(df)
     prev = latest - 1
@@ -272,24 +239,10 @@ def avg_health(path: str | None = None) -> dict:
 
 
 # =============================================================================
-# 4. Avg Delivery Confidence  (fourth KPI)
+# 4. Avg Delivery Confidence
 # =============================================================================
 
 def del_conf(path: str | None = None) -> dict:
-    """
-    Portfolio-wide average delivery confidence on the latest survey, with
-    comparison arrow vs the previous survey.
-
-    Returns
-    -------
-    {
-        'value': float | None,              # None if delivery metrics aren't in the latest survey
-        'previous': float | None,
-        'delta': float,
-        'trend': 'up' | 'down' | 'flat',
-        'band': 'green' | 'amber' | 'red',
-    }
-    """
     df = _load(path)
     latest = _latest_survey(df)
     prev = latest - 1
@@ -309,10 +262,9 @@ def del_conf(path: str | None = None) -> dict:
 
 
 # =============================================================================
-# 5. Send Support Now  (left table)
+# 5. Send Support Now
 # =============================================================================
 
-# Metric → (human-readable issue phrase, recommended action, display priority if low)
 _SUPPORT_ISSUE_TEMPLATES = {
     'Psych. Safety':   ('Low Psychological Safety',  'Facilitate a safe retro', 'High'),
     'Cognitive Load':  ('High Cognitive Load',       'Descope non-essentials', 'Med'),
@@ -326,31 +278,7 @@ _SUPPORT_ISSUE_TEMPLATES = {
     'Productivity':    ('Productivity Slump',        'Diagnose blockers',      'Med'),
 }
 
-
 def send_support(path: str | None = None, top_n: int = 5) -> list[dict]:
-    """
-    Teams most in need of intervention, with the specific issue and suggested action.
-
-    For each team, we find the behaviour metric with the lowest latest-survey
-    score and map it to an issue/action using `_SUPPORT_ISSUE_TEMPLATES`. Only
-    teams whose worst metric is in the red band (< AMBER_THRESHOLD) are returned.
-
-    Returns
-    -------
-    [
-        {
-            'team': int,
-            'team_label': str,
-            'priority': 'High' | 'Med',
-            'issue': str,
-            'action': str,
-            'worst_metric': str,
-            'worst_value': float,
-        },
-        ...
-    ]
-    Ordered by worst_value ascending (most urgent first), truncated to `top_n`.
-    """
     df = _load(path)
     latest = _latest_survey(df)
 
@@ -364,7 +292,6 @@ def send_support(path: str | None = None, top_n: int = 5) -> list[dict]:
         worst_metric = per_metric.idxmin()
         worst_value = float(per_metric.min())
 
-        # Only surface teams whose worst metric is actually in red territory.
         if worst_value >= AMBER_THRESHOLD:
             continue
 
@@ -388,32 +315,10 @@ def send_support(path: str | None = None, top_n: int = 5) -> list[dict]:
 
 
 # =============================================================================
-# 6. Team Status Heatmap  (centre grid)
+# 6. Team Status Heatmap
 # =============================================================================
 
 def status_heatmap(path: str | None = None) -> dict:
-    """
-    Grid of teams × key behavioural metrics on the latest survey, each cell
-    banded green/amber/red.
-
-    Returns
-    -------
-    {
-        'metrics': [str, ...],   # columns, in display order
-        'teams': [                # rows
-            {
-                'team': int,
-                'team_label': str,
-                'cells': [
-                    {'metric': str, 'value': float, 'band': 'green'|'amber'|'red'},
-                    ...  # one per metric, in the same order as `metrics`
-                ],
-            },
-            ...
-        ],
-        'survey': int,           # which survey the data came from
-    }
-    """
     df = _load(path)
     latest = _latest_survey(df)
     df_latest = df[df['survey'] == latest]
@@ -443,51 +348,16 @@ def status_heatmap(path: str | None = None) -> dict:
 
 
 # =============================================================================
-# 7. Performance Outlook  (right scatter)
+# 7. Performance Outlook
 # =============================================================================
 
 def perf_outlook(path: str | None = None) -> dict:
-    """
-    2D scatter of (behaviour_health, delivery_confidence) per team on the
-    latest survey, for the four-quadrant "Front Runners / High Risk Zone /
-    Potential, Needs Support / [bottom-right]" chart.
-
-    The frontend draws the quadrant dividers at (50, 50) by default; the exact
-    divider values are returned so the UI can stay in sync with the logic here.
-
-    Returns
-    -------
-    {
-        'points': [
-            {
-                'team': int,
-                'team_label': str,
-                'behaviour_health': float,     # x
-                'delivery_confidence': float,  # y
-                'quadrant': 'front_runner' | 'high_risk' | 'potential' | 'delivering_despite',
-            },
-            ...
-        ],
-        'x_divider': float,   # 50
-        'y_divider': float,   # 50
-        'x_label': 'Behaviour Health',
-        'y_label': 'Delivery Confidence',
-    }
-    """
     df = _load(path)
     latest = _latest_survey(df)
 
     x_mid, y_mid = 50.0, 50.0
 
     def quadrant(x: float, y: float) -> str:
-        # Same axis conventions as the mock:
-        #   x = Behaviour Health, y = Delivery Confidence
-        #   top-left  (low x, high y)  → front_runner? No — mock shows front runner top-left,
-        #                                  but that only makes sense if "front runner" means
-        #                                  "delivering despite wobbly behaviour health".
-        #   Re-reading the mock: top-left = Front Runners, top-right = High Risk Zone,
-        #   bottom-left = Potential/Needs Support, bottom-right unlabelled (delivering_despite).
-        # We'll honour that labelling exactly.
         high_y = y >= y_mid
         high_x = x >= x_mid
         if high_y and not high_x:   return 'front_runner'
@@ -519,32 +389,10 @@ def perf_outlook(path: str | None = None) -> dict:
 
 
 # =============================================================================
-# 8. Alert Summary  (bottom list)
+# 8. Alert Summary
 # =============================================================================
 
 def alert(path: str | None = None, top_n: int = 10) -> list[dict]:
-    """
-    Notable events across the portfolio on the latest survey: sharp drops,
-    sharp recoveries, and teams crossing into red.
-
-    Returns
-    -------
-    [
-        {
-            'team': int,
-            'team_label': str,
-            'severity': 'critical' | 'warning' | 'info',
-            'metric': str,
-            'message': str,
-            'current': float,
-            'previous': float,
-            'delta': float,
-        },
-        ...
-    ]
-    Ordered by severity (critical > warning > info) then by |delta| descending,
-    truncated to `top_n`.
-    """
     df = _load(path)
     latest = _latest_survey(df)
     prev = latest - 1
@@ -566,19 +414,16 @@ def alert(path: str | None = None, top_n: int = 10) -> list[dict]:
 
             severity = None
             message = None
-            # Crossed into red territory this wave
+            
             if now_val < AMBER_THRESHOLD <= prev_val:
                 severity = 'critical'
                 message = f'{m} dropped into red ({prev_val:.0f} → {now_val:.0f})'
-            # Big drop but still above red
             elif delta <= -ALERT_DROP_DELTA:
                 severity = 'warning'
                 message = f'{m} fell by {abs(delta):.0f} points ({prev_val:.0f} → {now_val:.0f})'
-            # Big recovery out of red
             elif prev_val < AMBER_THRESHOLD <= now_val:
                 severity = 'info'
                 message = f'{m} recovered to green/amber ({prev_val:.0f} → {now_val:.0f})'
-            # Big positive move
             elif delta >= ALERT_RECOVERY_DELTA:
                 severity = 'info'
                 message = f'{m} improved by {delta:.0f} points ({prev_val:.0f} → {now_val:.0f})'
@@ -597,4 +442,3 @@ def alert(path: str | None = None, top_n: int = 10) -> list[dict]:
 
     events.sort(key=lambda e: (sev_order[e['severity']], -abs(e['delta'])))
     return events[:top_n]
-

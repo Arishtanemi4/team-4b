@@ -15,3 +15,4 @@ dependencies:
   - uvicorn
   - cryptography
   - regex
+  - openpyxl
