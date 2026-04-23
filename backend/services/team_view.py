@@ -21,13 +21,25 @@ Note on reverse-coding (different from the portfolio dashboard):
 
 from __future__ import annotations
 import pandas as pd
+import os
 
 
 # =============================================================================
 # Configuration
 # =============================================================================
 
-_DEFAULT_PATH = 'dashboard_data.csv'
+# 1. Get the directory of the current file (.../root/backend/services)
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 2. Go up one level to the 'backend' directory (.../root/backend)
+BACKEND_DIR = os.path.dirname(CURRENT_DIR)
+
+# 3. Go up one MORE level to your project 'root' directory (.../root)
+ROOT_DIR = os.path.dirname(BACKEND_DIR)
+
+# 4. Point into the root's 'db' folder and target 'users.csv'
+_DEFAULT_PATH = os.path.join(ROOT_DIR, 'db', 'dashboard_data.csv')
+
 
 # Raw-scale bands on 0..100. For metrics where "higher = good".
 # Same thresholds as the portfolio dashboard to keep the two coherent.
