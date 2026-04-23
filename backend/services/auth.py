@@ -18,6 +18,7 @@ CSV_PATH = os.path.join(ROOT_DIR, 'db', 'users.csv')
 def get_team_data_from_csv(team_number: str):
     """
     Opens the CSV file, reads it row by row, and looks for a matching team_number.
+    Returns: (password_hash, team_name, team_anon_number)
     """
     try:
         # Note: Using utf-8-sig to avoid the hidden Windows BOM character issue
@@ -26,7 +27,14 @@ def get_team_data_from_csv(team_number: str):
             
             for row in reader:
                 if row['team_number'] == team_number:
-                    return row['password_hash'], row['team_name']
+                    team_anon_number = row.get('team_anon_number', '')
+                    # Convert to int if not empty, otherwise None
+                    try:
+                        team_anon_number = int(team_anon_number) if team_anon_number else None
+                    except ValueError:
+                        team_anon_number = None
+                    
+                    return row['password_hash'], row['team_name'], team_anon_number
                     
     except FileNotFoundError:
         print(f"Error: Could not find CSV at {CSV_PATH}")
@@ -39,6 +47,7 @@ def get_team_data_from_csv(team_number: str):
 def process_authentication(team_number: str, provided_password_hash: str) -> dict:
     """
     Authenticates by comparing the provided hash against the CSV data.
+    Returns the team_anon_number needed for API calls.
     """
     # 1. Fetch the data using the new CSV function
     result = get_team_data_from_csv(team_number)
@@ -47,15 +56,16 @@ def process_authentication(team_number: str, provided_password_hash: str) -> dic
     if not result:
         raise HTTPException(status_code=401, detail="Invalid team number or password")
         
-    stored_db_hash, team_name = result
+    stored_db_hash, team_name, team_anon_number = result
         
     # 3. Direct string comparison
     if provided_password_hash != stored_db_hash:
         raise HTTPException(status_code=401, detail="Invalid team number or password")
     
-    # 4. Success!
+    # 4. Success! Return both team_number and team_anon_number
     return {
         "team_number": team_number,
+        "team_anon_number": team_anon_number,  # <-- This is what the frontend needs for API calls
         "team_name": team_name,
         "status": "Authentication successful"
     }

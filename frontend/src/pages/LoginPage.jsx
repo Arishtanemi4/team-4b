@@ -1,110 +1,159 @@
 import React, { useState } from "react";
-import { Users, Lock } from "lucide-react";
-import { Button } from "../components/ui/button";
-import "../App.css";
+import { Lock, User, Loader2 } from "lucide-react";
 
 export default function LoginPage({ onLogin }) {
-  const [teamName, setTeamName] = useState("");
+  const [teamNumber, setTeamNumber] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+    setError(null);
     setIsLoading(true);
 
     try {
-      const url = "http://127.0.0.1:8000/authenticate";
-      
-      // We now pass the data in the body as a JSON string, matching your curl -d payload
-      const response = await fetch(url, {
-        method: "POST", 
+      const response = await fetch("http://localhost:8000/authenticate", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json"
         },
         body: JSON.stringify({
-          team_number: teamName,
-          password_hash: password
-        })
+          team_number: teamNumber,
+          password_hash: password, // Note: In a production app, ensure this is handled securely
+        }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json(); 
-        console.log("Authentication successful:", data);
+        // Extract team_anon_number from the response - this is what we need for API calls
+        const teamAnonNumber = data?.data?.team_anon_number;
         
-        // Tell App.js we are logged in!
-        if (onLogin) onLogin(); 
+        if (teamAnonNumber === null || teamAnonNumber === undefined) {
+          setError("Authentication failed: Missing team ID in response.");
+          return;
+        }
+        
+        // Pass the team_anon_number up to App.js!
+        onLogin(teamAnonNumber);
       } else {
-        // The server responded, but with an error status (e.g., 401 Unauthorized)
-        setError("Invalid team name or password.");
+        // Backend rejected the login
+        setError(data.message || "Invalid team number or password.");
       }
     } catch (err) {
-      // The request failed entirely (e.g., server is offline or CORS issue)
-      console.error("Network error:", err);
-      setError("Could not connect to the server. Is the API running?");
+      console.error("Login error:", err);
+      setError("Failed to connect to the server. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="login-page-container">
-      <div className="login-card">
-        <div className="login-header">
-          <div className="login-title">Welcome Back</div>
-          <div className="login-subtitle">Enter your team credentials to access the console</div>
+    <div className="app-container flex items-center justify-center min-h-screen" style={{ backgroundColor: "#0f172a" }}>
+      <div 
+        style={{ 
+          backgroundColor: "#1e293b", 
+          padding: "2.5rem", 
+          borderRadius: "12px", 
+          width: "100%", 
+          maxWidth: "400px",
+          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)"
+        }}
+      >
+        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <h1 style={{ color: "#f8fafc", fontSize: "1.5rem", fontWeight: "bold", margin: 0 }}>Pulse Console</h1>
+          <p style={{ color: "#94a3b8", marginTop: "0.5rem" }}>Sign in to view your team's dashboard</p>
         </div>
 
-        <form className="login-form" onSubmit={handleLogin}>
-          
-          {/* Team Name Input */}
-          <div className="input-group">
-            <label className="input-label" htmlFor="teamName">Team Name / Number</label>
-            <div className="input-wrapper">
-              <Users className="input-icon" size={18} />
+        {error && (
+          <div style={{ backgroundColor: "rgba(239, 68, 68, 0.1)", color: "#ef4444", padding: "0.75rem", borderRadius: "6px", marginBottom: "1.5rem", fontSize: "0.875rem", textAlign: "center" }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div>
+            <label style={{ display: "block", color: "#cbd5e1", fontSize: "0.875rem", marginBottom: "0.5rem" }}>
+              Team Number
+            </label>
+            <div style={{ position: "relative" }}>
+              <User size={18} color="#94a3b8" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
               <input
-                id="teamName"
                 type="text"
-                className="custom-input"
-                placeholder="e.g. 99A"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
+                value={teamNumber}
+                onChange={(e) => setTeamNumber(e.target.value)}
+                placeholder="e.g., 1A"
                 required
-                disabled={isLoading}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem 0.75rem 0.75rem 2.5rem",
+                  backgroundColor: "#0f172a",
+                  border: "1px solid #334155",
+                  borderRadius: "6px",
+                  color: "#f8fafc",
+                  outline: "none",
+                  boxSizing: "border-box"
+                }}
               />
             </div>
           </div>
 
-          {/* Password Input */}
-          <div className="input-group">
-            <label className="input-label" htmlFor="password">Password Hash</label>
-            <div className="input-wrapper">
-              <Lock className="input-icon" size={18} />
+          <div>
+            <label style={{ display: "block", color: "#cbd5e1", fontSize: "0.875rem", marginBottom: "0.5rem" }}>
+              Password
+            </label>
+            <div style={{ position: "relative" }}>
+              <Lock size={18} color="#94a3b8" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
               <input
-                id="password"
                 type="password"
-                className="custom-input"
-                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
                 required
-                disabled={isLoading}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem 0.75rem 0.75rem 2.5rem",
+                  backgroundColor: "#0f172a",
+                  border: "1px solid #334155",
+                  borderRadius: "6px",
+                  color: "#f8fafc",
+                  outline: "none",
+                  boxSizing: "border-box"
+                }}
               />
             </div>
           </div>
 
-          {/* Error Message Display */}
-          {error && (
-            <div style={{ color: "#ef4444", fontSize: "0.85rem", textAlign: "center", fontWeight: "500", marginTop: "4px" }}>
-              {error}
-            </div>
-          )}
-
-          <Button type="submit" className="login-btn" disabled={isLoading}>
-            {isLoading ? "Authenticating..." : "Log In"}
-          </Button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            style={{
+              marginTop: "1rem",
+              width: "100%",
+              padding: "0.75rem",
+              backgroundColor: "#3b82f6",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "6px",
+              fontWeight: "bold",
+              cursor: isLoading ? "not-allowed" : "pointer",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "0.5rem",
+              opacity: isLoading ? 0.7 : 1
+            }}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="animate-spin" size={18} />
+                Signing in...
+              </>
+            ) : (
+              "Sign In"
+            )}
+          </button>
         </form>
       </div>
     </div>

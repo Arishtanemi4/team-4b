@@ -1,7 +1,8 @@
 # backend/app.py
-from fastapi import FastAPI, Query, Path
+from fastapi import FastAPI, Query, Path, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import pandas as pd
 from services.auth import process_authentication
 
 # Import all portfolio manager functions
@@ -41,6 +42,33 @@ async def authenticate_team(request: AuthRequest):
         "data": auth_result
     }
 
+# --- Helper to map string IDs like "4B" to integer IDs like 17 ---
+def resolve_team_id(team_param: str) -> int:
+    """
+    Converts a string parameter (e.g., '4B') to its corresponding integer 
+    team_anon_number (17) by looking it up in users.csv.
+    If an integer is passed directly, it uses that integer.
+    """
+    # 1. Try to parse as integer directly (in case the frontend sends "17")
+    try:
+        return int(team_param)
+    except ValueError:
+        pass # It's a string like '4B', continue to lookup
+
+    # 2. Look up the team string in users.csv
+    try:
+        users_df = pd.read_csv("users.csv")
+        match = users_df[users_df["team_number"] == team_param]
+        if not match.empty:
+            val = match.iloc[0]["team_anon_number"]
+            if pd.notna(val):
+                return int(val)
+    except Exception as e:
+        print(f"Error resolving team ID from users.csv: {e}")
+        
+    raise HTTPException(status_code=400, detail=f"Could not map team identifier: {team_param}")
+
+
 # --- Portfolio Dashboard GET APIs ---
 @app.get("/portfolio/need-support", tags=["Portfolio Dashboard"])
 async def get_need_support():
@@ -75,27 +103,35 @@ async def get_alerts(top_n: int = Query(10, description="Number of top alerts to
     return alert(top_n=top_n)
 
 # --- Team View Dashboard GET APIs ---
+# Notice we changed the type hint to `team_id: str` so FastAPI accepts "4B", 
+# and then we pass it through `resolve_team_id()`
 
 @app.get("/team/{team_id}/wellbeing", tags=["Team Dashboard"])
-async def get_team_wellbeing(team_id: int = Path(..., description="The ID of the team")):
-    return wellbeing(team_id)
+async def get_team_wellbeing(team_id: str = Path(..., description="The ID or string identifier of the team")):
+    real_id = resolve_team_id(team_id)
+    return wellbeing(real_id)
 
 @app.get("/team/{team_id}/team-access", tags=["Team Dashboard"])
-async def get_team_access(team_id: int = Path(..., description="The ID of the team")):
-    return team_access(team_id)
+async def get_team_access(team_id: str = Path(..., description="The ID or string identifier of the team")):
+    real_id = resolve_team_id(team_id)
+    return team_access(real_id)
 
 @app.get("/team/{team_id}/cognitive-load", tags=["Team Dashboard"])
-async def get_team_cognitive_load(team_id: int = Path(..., description="The ID of the team")):
-    return cognitive_load(team_id)
+async def get_team_cognitive_load(team_id: str = Path(..., description="The ID or string identifier of the team")):
+    real_id = resolve_team_id(team_id)
+    return cognitive_load(real_id)
 
 @app.get("/team/{team_id}/strengths-gaps", tags=["Team Dashboard"])
-async def get_team_strengths_gaps(team_id: int = Path(..., description="The ID of the team")):
-    return strengths_gaps(team_id)
+async def get_team_strengths_gaps(team_id: str = Path(..., description="The ID or string identifier of the team")):
+    real_id = resolve_team_id(team_id)
+    return strengths_gaps(real_id)
 
 @app.get("/team/{team_id}/mood-tracker", tags=["Team Dashboard"])
-async def get_team_mood_tracker(team_id: int = Path(..., description="The ID of the team")):
-    return mood_tracker(team_id)
+async def get_team_mood_tracker(team_id: str = Path(..., description="The ID or string identifier of the team")):
+    real_id = resolve_team_id(team_id)
+    return mood_tracker(real_id)
 
 @app.get("/team/{team_id}/solution-strength", tags=["Team Dashboard"])
-async def get_team_solution_strength(team_id: int = Path(..., description="The ID of the team")):
-    return solution_strength(team_id)
+async def get_team_solution_strength(team_id: str = Path(..., description="The ID or string identifier of the team")):
+    real_id = resolve_team_id(team_id)
+    return solution_strength(real_id)

@@ -37,7 +37,6 @@ function Sidebar({ isOpen, toggleSidebar, onLogout }) {
         </NavLink>
       </nav>
 
-      {/* Logout Button at the bottom of the sidebar */}
       <div style={{ padding: "16px 0", borderTop: "1px solid #334155" }}>
         <button 
           onClick={onLogout}
@@ -54,58 +53,46 @@ function Sidebar({ isOpen, toggleSidebar, onLogout }) {
 
 // --- Main App Component ---
 export default function App() {
-  // State for sidebar toggle
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
-  // State for authentication (Set to false by default to show login screen)
+  // State for authentication and storing the logged-in team's anon ID
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentTeamId, setCurrentTeamId] = useState(null); // <-- This is now team_anon_number
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const handleLogin = () => {
+  // Update handleLogin to accept the team_anon_number from the login page
+  const handleLogin = (teamAnonNumber) => {
+    setCurrentTeamId(teamAnonNumber);
     setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
+    setCurrentTeamId(null);
     setIsAuthenticated(false);
   };
 
   return (
     <Router>
-      {/* If the user is NOT logged in, only show the Login Page */}
       {!isAuthenticated ? (
         <Routes>
-          {/* Pass the handleLogin function to the LoginPage so it can update this state */}
           <Route path="*" element={<LoginPage onLogin={handleLogin} />} />
         </Routes>
       ) : (
-        /* If the user IS logged in, show the main app layout */
         <div className="app-container">
-          
-          {/* Sidebar on the left */}
-          <Sidebar 
-            isOpen={isSidebarOpen} 
-            toggleSidebar={toggleSidebar} 
-            onLogout={handleLogout} 
-          />
-          
-          {/* Main Content Area on the right */}
+          <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} onLogout={handleLogout} />
           <main className="main-content">
             <div className="main-padding">
               <Routes>
-                <Route path="/" element={<TeamView />} />
+                {/* Pass the team_anon_number (integer ID) down as a prop */}
+                <Route path="/" element={<TeamView teamId={currentTeamId} />} />
                 <Route path="/portfolio" element={<PortfolioManagerView />} />
-                {/* Catch-all route to redirect back to home if they type a weird URL */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </div>
           </main>
-          
         </div>
       )}
     </Router>
   );
 }
-

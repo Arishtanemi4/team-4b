@@ -7,15 +7,15 @@ import ActionColumn from "../components/ActionColumn";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 
-// Helper to map backend "smiley" string to actual Icons and Colors
 const getIcon = (smileyStatus, size = 56) => {
   if (smileyStatus === "happy") return <Smile size={size} color="#22c55e" />;
   if (smileyStatus === "neutral") return <Meh size={size} color="#eab308" />;
   if (smileyStatus === "sad") return <Frown size={size} color="#ef4444" />;
-  return <Meh size={size} color="#94a3b8" />; // fallback
+  return <Meh size={size} color="#94a3b8" />;
 };
 
-export default function TeamView() {
+// Accept teamId as a prop here
+export default function TeamView({ teamId }) {
   const [data, setData] = useState({
     wellbeing: null,
     teamAccess: null,
@@ -28,13 +28,13 @@ export default function TeamView() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Replace with dynamic team ID from your Auth context or LocalStorage
-    const teamId = 1; 
-    
-    // Defaulting to standard local FastAPI port, ensure this matches your setup
+    // Guard clause: if no teamId is provided yet, do nothing
+    if (!teamId) return;
+
     const baseUrl = "http://localhost:8000"; 
 
     const fetchDashboardData = async () => {
+      setLoading(true);
       try {
         const [wb, ta, cl, sg, mt, ss] = await Promise.all([
           fetch(`${baseUrl}/team/${teamId}/wellbeing`).then(res => res.json()),
@@ -61,7 +61,7 @@ export default function TeamView() {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [teamId]); // Re-run if teamId changes
 
   if (loading) {
     return (
@@ -156,7 +156,6 @@ export default function TeamView() {
           <CardHeader><CardTitle>How Strong Is Our Solution?</CardTitle></CardHeader>
           <CardContent className="text-center">
             <div className="emoji-large">🎯</div>
-            {/* The background color of the button could also be mapped to data.solutionStrength?.band if desired */}
             <Button>
               {data.solutionStrength?.label || "Evaluating..."}
             </Button>

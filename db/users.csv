@@ -1,3 +1,24 @@
-user_id,team_number,team_name,password_hash,role
-999991,99A,Kaustubh,1234,manager
-999121,99B,NotKaustubh,1234,member
+user_id,team_number,team_name,password_hash,role,team_anon_number
+999991,99A,Warrick,4bWins!,manager,
+,1A,Woodmynd,q8Vn2XmK9LpW,member,1
+,1B,NDA_null,R4tY7bE1oZ3c,member,2
+,1C,Collective Voice,m5Ha9DqF2jU8,member,3
+,1D,PaNDA,vP6wL3kS7xN1,member,4
+,1E,NU-Shift,T2gI8cM4yB5r,member,5
+,2A,Scope2WBS,d0J9uA6eO2vH,member,6
+,3A,Supply Wise,F8nZ5pT1qX4m,member,11
+,3B,The Envelope,W3bY9hK2cS7o,member,12
+,3C,Route Awakening,i6U1rL8aV4tD,member,13
+,3D,DemandAI,N5xG2mE9wP3j,member,14
+,4A,Team Heart of Data,c7S4kV1bH8fQ,member,16
+,4B,Signal Before Noise,y2O9tD6lR5uM,member,17
+,5A,Hackapillar,P4iW8aX3nZ1e,member,18
+,5B,Evidence Engine,b9F2qU7hC5kY,member,19
+,5C,Clearly We Assumed,M1vT6pR4sJ9g,member,20
+,5E,TBA,k5L8oN2eA7dW,member,22
+,6A,6A,E3cI9xV1mH4b,member,23
+,6B,Mission on Time,u7Y2zG5fS8tQ,member,24
+,6C,Insight WORKS,H4wP1jB6nO3x,member,25
+,6D,Team Confidence,a8K5dM9uC2rL,member,26
+,6F,Rock 'n' Rolls Royce,Z1eX4gT7qF6v,member,35
+,6G,SIGNAL,o9R3hN5bY2mA,member,34
