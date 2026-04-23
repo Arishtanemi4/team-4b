@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, NavLink, Navigate } from "react-router-dom";
-import { Menu, Users, Briefcase, LogOut } from "lucide-react";
+import { Menu, Users, Briefcase, LogOut, BarChart3 } from "lucide-react";
 
 import TeamView from "./pages/TeamView";
 import PortfolioManagerView from "./pages/PortfolioManagerView";
+import SurveyComparison from "./pages/SurveyComparison";
 import LoginPage from "./pages/LoginPage";
 import "./App.css";
 
@@ -31,15 +32,25 @@ function Sidebar({ isOpen, toggleSidebar, onLogout, userRole }) {
           </NavLink>
         )}
         
-        {/* Managers see PortfolioManagerView */}
+        {/* Managers see PortfolioManagerView and SurveyComparison */}
         {userRole === "manager" && (
-          <NavLink 
-            to="/" 
-            className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}
-          >
-            <Briefcase size={20} />
-            <span className="link-text">Portfolio Manager</span>
-          </NavLink>
+          <>
+            <NavLink 
+              to="/" 
+              className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}
+              end
+            >
+              <Briefcase size={20} />
+              <span className="link-text">Portfolio Manager</span>
+            </NavLink>
+            <NavLink 
+              to="/survey-comparison" 
+              className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}
+            >
+              <BarChart3 size={20} />
+              <span className="link-text">Survey Comparison</span>
+            </NavLink>
+          </>
         )}
       </nav>
 
@@ -93,7 +104,7 @@ export default function App() {
           <main className="main-content">
             <div className="main-padding">
               <Routes>
-                {/* Role-based routing: members see TeamView, managers see PortfolioManagerView */}
+                {/* Role-based routing: members see TeamView, managers see PortfolioManagerView & SurveyComparison */}
                 {userRole === "member" ? (
                   <>
                     <Route path="/" element={<TeamView teamId={currentTeamId} />} />
@@ -102,6 +113,7 @@ export default function App() {
                 ) : userRole === "manager" ? (
                   <>
                     <Route path="/" element={<PortfolioManagerView />} />
+                    <Route path="/survey-comparison" element={<SurveyComparison />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </>
                 ) : (
