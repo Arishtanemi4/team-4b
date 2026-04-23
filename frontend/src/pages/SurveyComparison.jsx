@@ -4,7 +4,7 @@ import { X, ZoomIn, ZoomOut, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, 
 const imagesByTab = {
   "2": ["/image1.jpeg", "/image2.jpeg", "/image3.jpeg"],
   "3": ["/image4.jpeg", "/image5.jpeg", "/image6.jpeg"],
-  "4": ["/image7.jpeg", "/image8.jpeg", "/image9.jpeg"],
+  "4": ["/image7.png", "/image8.png", "/image9.png"],
   "5": ["/db/image1.png", "/db/image2.png", "/db/image3.png"],
 };
 
