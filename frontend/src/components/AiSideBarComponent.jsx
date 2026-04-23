@@ -1,3 +1,6 @@
+import React, { useState, useEffect } from "react";
+import { X, Sparkles, Loader2 } from "lucide-react";
+
 function AISidebar({ isOpen, onClose }) {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
@@ -7,8 +10,7 @@ function AISidebar({ isOpen, onClose }) {
       setLoading(true);
       setContent("");
       
-      // Try to call the backend endpoint first
-      // Fallback to text file if backend is not available
+      // Try backend endpoint first
       fetch("http://localhost:8000/api/analytics/insights")
         .then(async (res) => {
           if (!res.ok) throw new Error("Backend not available");
@@ -27,7 +29,10 @@ function AISidebar({ isOpen, onClose }) {
         })
         .catch(() => {
           // Fallback to text file
-          fetch("/analytics_ai.txt")
+          setLoading(true);
+          setContent("");
+          
+          fetch("/ai_insights.txt")
             .then(res => res.text())
             .then(text => {
               let index = 0;
@@ -80,6 +85,7 @@ function AISidebar({ isOpen, onClose }) {
           zIndex: 1000,
           display: "flex",
           flexDirection: "column",
+          overflow: "hidden",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -89,6 +95,7 @@ function AISidebar({ isOpen, onClose }) {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          flexShrink: 0,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <Sparkles size={20} color="#3b82f6" />
@@ -103,6 +110,10 @@ function AISidebar({ isOpen, onClose }) {
               border: "none",
               cursor: "pointer",
               color: "#94a3b8",
+              padding: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <X size={24} />
@@ -119,10 +130,27 @@ function AISidebar({ isOpen, onClose }) {
           whiteSpace: "pre-wrap",
           wordWrap: "break-word",
         }}>
-          {loading && <Loader2 className="animate-spin" size={20} />}
-          {content}
+          {loading ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} />
+              <span>Loading insights...</span>
+            </div>
+          ) : content ? (
+            content
+          ) : (
+            <span style={{ color: "#94a3b8" }}>No insights available</span>
+          )}
         </div>
       </div>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </>
   );
 }
+
+export default AISidebar;

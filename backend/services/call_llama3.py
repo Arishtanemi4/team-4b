@@ -1,6 +1,6 @@
 import subprocess
 import json
-from typing import Generator
+from typing import Generator, Optional
 
 def check_ollama_running() -> bool:
     """Check if Ollama is running"""
@@ -49,10 +49,9 @@ def call_llama3_streaming(prompt: str, model: str = "llama3") -> Generator[str, 
         
         process.wait()
     except (FileNotFoundError, subprocess.SubprocessError) as e:
-        print(f"Error calling Llama3: {e}")
-        return None
+        yield f"Error calling Llama3: {str(e)}"
 
-def get_analytics_insights(prompt: str) -> Generator[str, None, None]:
+def get_analytics_insights(prompt: str) -> Optional[Generator[str, None, None]]:
     """Get analytics insights from local Llama3"""
     if not check_ollama_running():
         return None
@@ -68,24 +67,3 @@ def get_analytics_insights(prompt: str) -> Generator[str, None, None]:
             return call_llama3_streaming(prompt, model="llama2")
         except:
             return None
-
-if __name__ == "__main__":
-    prompt = """Analyze the team survey data and provide key insights about:
-    1. Team morale trends
-    2. Stress levels and management
-    3. Collaboration effectiveness
-    4. Leadership support
-    5. Recommendations for improvement"""
-    
-    if check_ollama_running():
-        print("Ollama is running")
-        if check_llama3_available():
-            print("Llama3 is available")
-            insights = get_analytics_insights(prompt)
-            if insights:
-                for chunk in insights:
-                    print(chunk, end="", flush=True)
-        else:
-            print("Llama3 model not found")
-    else:
-        print("Ollama is not running")

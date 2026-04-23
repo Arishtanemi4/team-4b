@@ -1,14 +1,15 @@
-# backend/app.py
 from fastapi import FastAPI, Query, Path, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
+import json
+import os
+import requests
 from services.auth import process_authentication
 
 from services.call_llm_api import check_api_keys, get_analytics_insights as get_api_insights
 from services.call_llama3 import check_ollama_running, check_llama3_available, get_analytics_insights as get_llama_insights
 from fastapi.responses import StreamingResponse
-
 
 # Import all portfolio manager functions
 from services.portfolio_manager import (
@@ -142,67 +143,108 @@ async def get_team_solution_strength(team_id: str = Path(..., description="The I
     return solution_strength(real_id)
 
 
+# --- AI INSIGHTS STREAMING ENDPOINT ---
 
 async def ai_insights_stream():
-    """Main function to determine which AI to use and stream insights"""
+    """Stream AI insights based on portfolio data"""
     
-    # Step 1: Check if LLM APIs are available
+    # Fetch all portfolio data
+    portfolio_data = {}
+    try:
+        portfolio_data = {
+            "need_support": need_support(),
+            "team_trend": team_trend(),
+            "avg_health": avg_health(),
+            "del_conf": del_conf(),
+            "send_support": send_support(top_n=5),
+            "status_heatmap": status_heatmap(),
+            "perf_outlook": perf_outlook(),
+            "alerts": alert(top_n=10),
+        }
+    except Exception as e:
+        portfolio_data = {"error": str(e)}
+    
+    # Format portfolio data for prompt
+    portfolio_summary = f"""
+Portfolio Manager Dashboard Data:
+==============================
+Teams Needing Support: {portfolio_data.get('need_support')}
+Teams Trending Down: {portfolio_data.get('team_trend')}
+Avg Behaviour Health: {portfolio_data.get('avg_health')}
+Avg Delivery Confidence: {portfolio_data.get('del_conf')}
+Teams Requiring Support: {json.dumps(portfolio_data.get('send_support', [])[:2])}
+Team Status Overview: {json.dumps(portfolio_data.get('status_heatmap', {}), default=str)[:500]}
+Performance Outlook: {json.dumps(portfolio_data.get('perf_outlook', {}), default=str)[:500]}
+Active Alerts: {len(portfolio_data.get('alerts', []))} alerts detected
+Alert Summary: {json.dumps([{'team': a.get('team_label'), 'severity': a.get('severity'), 'message': a.get('message')} for a in portfolio_data.get('alerts', [])[:3]])}
+"""
+
+    prompt = f"""{portfolio_summary}
+
+Based on the above portfolio manager data, provide comprehensive insights:
+1. Executive summary of portfolio health status
+2. Critical areas requiring immediate attention
+3. Teams showing strong performance
+4. Key risks and their mitigation strategies
+5. Top 3 action items for the portfolio manager
+
+Keep insights focused, actionable, and data-driven."""
+
+    # Step 1: Try LLM APIs
     try:
         available_apis = check_api_keys()
-        
         if available_apis:
-            prompt = """Analyze the team survey data and provide comprehensive insights about:
-1. Team morale and engagement trends
-2. Stress levels and burnout indicators
-3. Collaboration and communication effectiveness
-4. Leadership support and confidence
-5. Productivity and delivery confidence
-6. Key recommendations for improvement
-
-Format the response with clear sections and actionable insights."""
-            
+            print(f"Using LLM API: {list(available_apis.keys())}")
             insights = get_api_insights(prompt)
             if insights:
                 for chunk in insights:
                     yield chunk
                 return
     except Exception as e:
-        print(f"LLM API check failed: {e}")
+        print(f"LLM API failed: {e}")
     
-    # Step 2: Check if local Llama3 is available
+    # Step 2: Try local Llama3
     try:
         if check_ollama_running() and check_llama3_available():
-            prompt = """Analyze the team survey data and provide comprehensive insights about:
-1. Team morale and engagement trends
-2. Stress levels and burnout indicators
-3. Collaboration and communication effectiveness
-4. Leadership support and confidence
-5. Productivity and delivery confidence
-6. Key recommendations for improvement
-
-Format the response with clear sections and actionable insights."""
-            
+            print("Using local Llama3")
             insights = get_llama_insights(prompt)
             if insights:
                 for chunk in insights:
                     yield chunk
                 return
     except Exception as e:
-        print(f"Llama3 check failed: {e}")
+        print(f"Llama3 failed: {e}")
     
-    # Step 3: Fallback to text file streaming
+    # Step 3: Fallback to text file
+    print("Falling back to text file")
     try:
-        with open("../frontend/public/analytics_ai.txt", 'r') as f:
-            content = f.read()
-            for char in content:
-                yield char
+        text_file_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..",
+            "frontend",
+            "public",
+            "ai_insights.txt"
+        )
+        
+        if os.path.exists(text_file_path):
+            with open(text_file_path, 'r') as f:
+                content = f.read()
+                for char in content:
+                    yield char
+        else:
+            yield f"Analytics file not found at {text_file_path}"
     except Exception as e:
-        yield f"Error reading analytics file: {str(e)}"
+        yield f"Error: {str(e)}"
 
 @app.get("/api/analytics/insights")
-async def get_insights():
-    """Endpoint to stream AI insights"""
+async def get_analytics_insights():
+    """Endpoint to stream AI-generated portfolio insights"""
     return StreamingResponse(
         ai_insights_stream(),
         media_type="text/plain"
     )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
