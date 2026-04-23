@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang='en'><head><meta charset='utf-8'>
+<title>Team 06 - Team Pulse &amp; Performance</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 Helvetica, Arial, sans-serif;
+    background: #e5e7eb; color: #0f172a;
+  }
+  .frame {
+    max-width: 980px; margin: 0 auto;
+    background: #f1f5f9; border-radius: 12px;
+    overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,.1);
+  }
+  .topbar {
+    background: #3b5cad; color: #fff;
+    padding: 14px 22px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  .dots span {
+    display: inline-block; width: 12px; height: 12px;
+    border-radius: 50%; margin-left: 6px;
+  }
+  .dots .g { background: #22c55e; }
+  .dots .y { background: #f59e0b; }
+  .dots .b { background: #93c5fd; }
+
+  /* ---- Tabs (pure CSS, no JS) ---------------------------------------- */
+  .tabs { display: flex; background: #e2e8f0; border-bottom: 1px solid #cbd5e1; }
+  .tab-radio { display: none; }
+  .tab-label {
+    flex: 1; padding: 12px 16px; text-align: center; cursor: pointer;
+    font-size: 13px; font-weight: 600; color: #475569;
+    border-right: 1px solid #cbd5e1;
+    transition: background .15s, color .15s;
+    user-select: none;
+  }
+  .tab-label:last-of-type { border-right: none; }
+  .tab-label:hover { background: #f1f5f9; color: #0f172a; }
+  .tab-panel { display: none; }
+  #tab1:checked ~ .tab-content #panel1,
+  #tab2:checked ~ .tab-content #panel2,
+  #tab3:checked ~ .tab-content #panel3 { display: block; }
+  #tab1:checked ~ .tabs label[for='tab1'],
+  #tab2:checked ~ .tabs label[for='tab2'],
+  #tab3:checked ~ .tabs label[for='tab3'] {
+    background: #f1f5f9; color: #3b5cad;
+    box-shadow: inset 0 -3px 0 #3b5cad;
+  }
+
+  /* ---- Shared panel chrome ------------------------------------------- */
+  .panel {
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 8px; overflow: hidden;
+  }
+  .panel h2 {
+    margin: 0; background: #3b5cad; color: #fff;
+    font-size: 13px; font-weight: 600; padding: 8px 12px;
+    text-align: center;
+  }
+  .panel-body { padding: 12px 14px; }
+
+  /* ---- Tab 1: Team Pulse ---------------------------------------------- */
+  .kpis {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px; padding: 18px;
+  }
+  .kpi {
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 8px; padding: 12px 16px;
+  }
+  .kpi .label {
+    text-align: center; font-size: 13px; color: #64748b;
+    border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;
+    margin-bottom: 10px; font-weight: 500;
+  }
+  .kpi .body {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    min-height: 56px;
+  }
+  .kpi .val { font-size: 26px; font-weight: 700; }
+  .kpi .trend { font-size: 18px; margin-left: 4px; }
+  .kpi .pct-chip {
+    display: block;
+    font-size: 11px; font-weight: 600;
+    margin-top: 6px; color: #94a3b8;
+    text-align: center;
+  }
+  .kpi .pct-chip .pct-label { color: #94a3b8; font-weight: 500; }
+
+  /* Motivational quote banner (top of Tab 1) */
+  .quote-banner {
+    margin: 18px 18px 0;
+    padding: 14px 20px 14px 48px;
+    background: linear-gradient(90deg, #fef3c7 0%, #fffbeb 100%);
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    position: relative;
+  }
+  .quote-banner::before {
+    content: '\201C';
+    position: absolute; left: 14px; top: 2px;
+    font-family: Georgia, serif; font-size: 48px;
+    color: #d97706; line-height: 1; opacity: 0.7;
+  }
+  .quote-banner .quote-text {
+    font-family: Georgia, serif; font-style: italic;
+    font-size: 14px; color: #78350f; line-height: 1.5;
+    margin: 0 0 4px;
+  }
+  .quote-banner .quote-attrib {
+    font-size: 11px; color: #a16207; text-align: right;
+    font-style: normal;
+  }
+  .quote-banner .quote-attrib::before { content: '\2014 '; }
+  .mid {
+    display: grid; grid-template-columns: 1fr 1.1fr 1fr;
+    gap: 14px; padding: 0 18px;
+  }
+  .sg-block { margin-bottom: 12px; }
+  .sg-block h3 {
+    margin: 0 0 8px; font-size: 13px; color: #334155;
+    border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;
+  }
+  .sg-list { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+  .sg-list li { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+  .sg-list .icon {
+    display: inline-flex; width: 18px; height: 18px; border-radius: 50%;
+    align-items: center; justify-content: center; font-size: 11px;
+    color: #fff; flex-shrink: 0; font-weight: 700;
+  }
+  .icon-tick { background: #22c55e; }
+  .icon-warn { background: #ef4444; }
+  .chart-label {
+    font-size: 13px; color: #334155; margin: 4px 0 2px 6px; font-weight: 500;
+  }
+  .gauge-q {
+    font-size: 13px; color: #334155; text-align: center; margin: 0 0 8px;
+  }
+  .gauge-lbl {
+    color: #fff; font-weight: 600; font-size: 14px;
+    padding: 6px 14px; border-radius: 6px; display: inline-block;
+    margin-top: 4px;
+  }
+  .gauge-wrap { text-align: center; }
+  .action-title {
+    text-align: center; font-family: Georgia, serif; font-style: italic;
+    font-size: 20px; color: #334155; margin: 20px 0 10px;
+  }
+  .actions {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px; padding: 0 18px 20px;
+  }
+  .action-card {
+    background: #fff; border-radius: 8px;
+    border: 1px solid #e2e8f0; overflow: hidden;
+  }
+  .action-card h3 {
+    margin: 0; color: #fff; padding: 8px 12px; font-size: 13px;
+    font-weight: 600; text-align: center;
+  }
+  .a-teamwork h3 { background: #22c55e; }
+  .a-load     h3 { background: #f59e0b; }
+  .a-solution h3 { background: #ef4444; }
+  .action-list { list-style: none; padding: 10px 14px; margin: 0; font-size: 12.5px; }
+  .action-list li {
+    padding: 6px 10px; margin-bottom: 6px;
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .action-list li::before {
+    content: ''; display: inline-block; width: 12px; height: 12px;
+    border: 1.5px solid currentColor; border-radius: 2px; flex-shrink: 0;
+  }
+  .a-teamwork .action-list li { color: #16a34a; }
+  .a-load     .action-list li { color: #d97706; }
+  .a-solution .action-list li { color: #dc2626; }
+  .action-list li span { color: #0f172a; font-weight: 400; }
+
+  /* ---- Tab 2: DISC full-width ----------------------------------------- */
+  .disc-hero { padding: 18px; }
+  .disc-hero-grid {
+    display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px;
+    padding: 18px; background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 8px;
+  }
+  .disc-summary { font-size: 13px; color: #0f172a; line-height: 1.55; }
+  .disc-summary .dom-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 999px;
+    color: #fff; font-weight: 700; font-size: 13px; margin-bottom: 10px;
+  }
+  .disc-meta {
+    font-size: 11px; color: #64748b; margin: 10px 0;
+    display: flex; gap: 14px; flex-wrap: wrap;
+  }
+  .disc-meta b { color: #0f172a; }
+  .disc-caveat {
+    font-size: 11px; color: #94a3b8; font-style: italic;
+    padding: 10px 18px 0; text-align: center;
+  }
+  .disc-cards {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; padding: 18px;
+  }
+  .disc-card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 12px; position: relative;
+  }
+  .disc-card.is-dom { border-color: #0f172a; border-width: 2px; }
+  .disc-card .letter {
+    display: inline-block; width: 32px; height: 32px; border-radius: 50%;
+    color: #fff; font-weight: 700; font-size: 16px;
+    text-align: center; line-height: 32px; margin-bottom: 8px;
+  }
+  .disc-card .name {
+    font-size: 13px; font-weight: 600; color: #0f172a; margin-bottom: 2px;
+  }
+  .disc-card .pct { font-size: 20px; font-weight: 700; color: #0f172a; }
+  .disc-card .blurb {
+    font-size: 11px; color: #64748b; margin-top: 6px; line-height: 1.4;
+  }
+
+  /* ---- Tab 3: Insights / synthesis ----------------------------------- */
+  .insight-wrap { padding: 18px; }
+
+  /* AI-generated narrative card (sits at top of Tab 3) */
+  .ai-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #8b5cf6;
+    border-radius: 8px;
+    padding: 16px 20px 14px;
+    margin-bottom: 16px;
+  }
+  .ai-card .ai-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    font-size: 11px; font-weight: 700; color: #7c3aed;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .ai-card .ai-header::before {
+    content: ''; display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; background: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+  }
+  .ai-card p {
+    margin: 0 0 10px; font-size: 13.5px; line-height: 1.55; color: #0f172a;
+  }
+  .ai-card p:last-child { margin-bottom: 0; }
+  .ai-card .ai-footer {
+    font-size: 10px; color: #94a3b8; font-style: italic;
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+  }
+  .ai-card.ai-error { border-left-color: #cbd5e1; }
+  .ai-card.ai-error .ai-header { color: #64748b; }
+  .ai-card.ai-error .ai-header::before {
+    background: #cbd5e1; box-shadow: 0 0 0 3px rgba(203, 213, 225, 0.4);
+  }
+  .headline-card {
+    background: linear-gradient(135deg, #3b5cad 0%, #1e3a8a 100%);
+    color: #fff; border-radius: 8px; padding: 18px 22px; margin-bottom: 16px;
+  }
+  .headline-card .eyebrow {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+    opacity: 0.8; margin-bottom: 6px;
+  }
+  .headline-card .headline { font-size: 18px; font-weight: 600; line-height: 1.35; }
+  .headline-card .trajectory {
+    font-size: 13px; opacity: 0.92; margin-top: 10px;
+    padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.25);
+  }
+
+  .priority-card {
+    background: #fff; border-left: 4px solid #ef4444;
+    border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 14px 18px; margin-bottom: 16px;
+  }
+  .priority-card .eyebrow {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+    color: #dc2626; font-weight: 700; margin-bottom: 4px;
+  }
+  .priority-card h3 {
+    margin: 0 0 6px; font-size: 16px; color: #0f172a; font-weight: 600;
+  }
+  .priority-card p {
+    margin: 0; font-size: 13px; color: #334155; line-height: 1.5;
+  }
+
+  .signals-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .signal-card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .signal-card h4 {
+    margin: 0 0 6px; font-size: 13px; color: #3b5cad; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .signal-card h4::before {
+    content: ''; display: inline-block; width: 6px; height: 6px;
+    background: #3b5cad; border-radius: 50%;
+  }
+  .signal-card p {
+    margin: 0; font-size: 12.5px; color: #334155; line-height: 1.5;
+  }
+
+  .mini-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; margin-bottom: 16px;
+  }
+  .mini-stat {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 10px 12px; text-align: center;
+  }
+  .mini-stat .label {
+    font-size: 10px; color: #64748b; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+  .mini-stat .val {
+    font-size: 18px; font-weight: 700; color: #0f172a;
+  }
+  .mini-stat .val.good { color: #16a34a; }
+  .mini-stat .val.warn { color: #d97706; }
+  .mini-stat .val.bad  { color: #dc2626; }
+
+  .footer {
+    padding: 8px 18px 14px; color: #64748b; font-size: 11px;
+    text-align: center;
+  }
+</style></head>
+<body>
+<div class='frame'>
+
+  <div class='topbar'>
+    <h1>Team 06 - Team Pulse &amp; Performance</h1>
+    <div class='dots'>
+      <span class='g'></span><span class='y'></span><span class='b'></span>
+    </div>
+  </div>
+
+  <!-- Radio inputs control which tab is shown -->
+  <input type='radio' name='tabs' id='tab1' class='tab-radio' checked>
+  <input type='radio' name='tabs' id='tab2' class='tab-radio'>
+  <input type='radio' name='tabs' id='tab3' class='tab-radio'>
+
+  <div class='tabs'>
+    <label class='tab-label' for='tab1'>Team Pulse</label>
+    <label class='tab-label' for='tab2'>DISC Profile</label>
+    <label class='tab-label' for='tab3'>Insights &amp; Synthesis</label>
+  </div>
+
+  <div class='tab-content'>
+
+    <!-- ==================== TAB 1: TEAM PULSE =================== -->
+    <div class='tab-panel' id='panel1'>
+      <div class='quote-banner'>
+        <p class='quote-text'>Every good team has a moment where they choose depth over breadth. This is yours.</p>
+        <div class='quote-attrib'>Adapted from Seth Godin</div>
+      </div>
+      <div class='kpis'>
+        <div class='kpi'>
+          <div class='label'>Wellbeing</div>
+          <div class='body'><svg viewBox='0 0 64 64' width='48' height='48'><circle cx='32' cy='32' r='28' fill='#22c55e'/><circle cx='24' cy='26' r='3' fill='#fff'/><circle cx='40' cy='26' r='3' fill='#fff'/><path d='M 22 38 Q 32 48 42 38' stroke='#fff' stroke-width='3' fill='none' stroke-linecap='round'/></svg><span class='val'>Good</span></div>
+          <span class='pct-chip'><span style='color:#22c55e'>+4%</span> <span class='pct-label'>vs last survey</span></span>
+        </div>
+        <div class='kpi'>
+          <div class='label'>Team Access</div>
+          <div class='body'><svg viewBox='0 0 64 64' width='48' height='48'><circle cx='32' cy='32' r='28' fill='#22c55e'/><circle cx='24' cy='26' r='3' fill='#fff'/><circle cx='40' cy='26' r='3' fill='#fff'/><path d='M 22 38 Q 32 48 42 38' stroke='#fff' stroke-width='3' fill='none' stroke-linecap='round'/></svg><span class='val'>76</span>
+            <span class='trend' style='color:#22c55e'>▲</span>
+          </div>
+          <span class='pct-chip'><span style='color:#22c55e'>+15%</span> <span class='pct-label'>vs last survey</span></span>
+        </div>
+        <div class='kpi'>
+          <div class='label'>Cognitive Load</div>
+          <div class='body'><svg viewBox='0 0 64 64' width='48' height='48'><circle cx='32' cy='32' r='28' fill='#ef4444'/><circle cx='24' cy='26' r='3' fill='#fff'/><circle cx='40' cy='26' r='3' fill='#fff'/><path d='M 22 42 Q 32 32 42 42' stroke='#fff' stroke-width='3' fill='none' stroke-linecap='round'/></svg><span class='val'>80</span>
+            <span class='trend' style='color:#ef4444'>■</span>
+          </div>
+          <span class='pct-chip'><span style='color:#94a3b8'>+2%</span> <span class='pct-label'>vs last survey</span></span>
+        </div>
+      </div>
+
+      <div class='mid'>
+        <div class='panel'>
+          <h2>Team Strengths &amp; Gaps</h2>
+          <div class='panel-body'>
+            <div class='sg-block'>
+              <h3>We're Great At:</h3>
+              <ul class='sg-list'><li><span class='icon icon-tick'>✓</span>Wellbeing</li><li><span class='icon icon-tick'>✓</span>Team Access</li><li><span class='icon icon-tick'>✓</span>Capacity</li><li><span class='icon icon-tick'>✓</span>Skills & Capability</li></ul>
+            </div>
+            <div class='sg-block'>
+              <h3>We Can Improve:</h3>
+              <ul class='sg-list'><li><span class='icon icon-warn'>!</span>Managing Workload</li></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class='panel'>
+          <h2>Team Mood Tracker</h2>
+          <div class='panel-body'>
+            <div class='chart-label'>How We're Feeling (Wellbeing - higher is better)</div>
+            
+    <svg viewBox='0 0 320 130' width='100%' preserveAspectRatio='xMidYMid meet'>
+      <line x1='36' y1='96.0' x2='304' y2='96.0' stroke='#e2e8f0' stroke-dasharray='2 3'/><text x='32' y='99.0' text-anchor='end' font-size='9' fill='#94a3b8'>0</text><line x1='36' y1='56.0' x2='304' y2='56.0' stroke='#e2e8f0' stroke-dasharray='2 3'/><text x='32' y='59.0' text-anchor='end' font-size='9' fill='#94a3b8'>50</text><line x1='36' y1='16.0' x2='304' y2='16.0' stroke='#e2e8f0' stroke-dasharray='2 3'/><text x='32' y='19.0' text-anchor='end' font-size='9' fill='#94a3b8'>100</text>
+      <line x1='36' y1='96' x2='304' y2='96'
+            stroke='#cbd5e1' stroke-width='1.2'/>
+      <rect x='56.1' y='44.3' width='49.1' height='51.7' fill='#86efac' stroke='#16a34a' stroke-width='1.5' rx='2'/><rect x='145.4' y='37.0' width='49.1' height='59.0' fill='#86efac' stroke='#16a34a' stroke-width='1.5' rx='2'/><rect x='234.8' y='34.7' width='49.1' height='61.3' fill='#86efac' stroke='#16a34a' stroke-width='1.5' rx='2'/>
+      <text x='80.7' y='40.3' text-anchor='middle' font-size='11' font-weight='600' fill='#16a34a'>65</text><text x='170.0' y='33.0' text-anchor='middle' font-size='11' font-weight='600' fill='#16a34a'>74</text><text x='259.3' y='30.7' text-anchor='middle' font-size='11' font-weight='600' fill='#16a34a'>77</text>
+      <text x='80.7' y='120' text-anchor='middle' font-size='10' fill='#64748b'>Survey 1</text><text x='170.0' y='120' text-anchor='middle' font-size='10' fill='#64748b'>Survey 2</text><text x='259.3' y='120' text-anchor='middle' font-size='10' fill='#64748b'>Survey 3</text>
+    </svg>
+    
+            <div class='chart-label'>Our Stress Level (Cognitive Load - lower is better)</div>
+            
+    <svg viewBox='0 0 320 130' width='100%' preserveAspectRatio='xMidYMid meet'>
+      <line x1='36' y1='96.0' x2='304' y2='96.0' stroke='#e2e8f0' stroke-dasharray='2 3'/><text x='32' y='99.0' text-anchor='end' font-size='9' fill='#94a3b8'>0</text><line x1='36' y1='56.0' x2='304' y2='56.0' stroke='#e2e8f0' stroke-dasharray='2 3'/><text x='32' y='59.0' text-anchor='end' font-size='9' fill='#94a3b8'>50</text><line x1='36' y1='16.0' x2='304' y2='16.0' stroke='#e2e8f0' stroke-dasharray='2 3'/><text x='32' y='19.0' text-anchor='end' font-size='9' fill='#94a3b8'>100</text>
+      <line x1='36' y1='96' x2='304' y2='96'
+            stroke='#cbd5e1' stroke-width='1.2'/>
+      <rect x='56.1' y='36.8' width='49.1' height='59.2' fill='#fca5a5' stroke='#dc2626' stroke-width='1.5' rx='2'/><rect x='145.4' y='33.4' width='49.1' height='62.6' fill='#fca5a5' stroke='#dc2626' stroke-width='1.5' rx='2'/><rect x='234.8' y='32.0' width='49.1' height='64.0' fill='#fca5a5' stroke='#dc2626' stroke-width='1.5' rx='2'/>
+      <text x='80.7' y='32.8' text-anchor='middle' font-size='11' font-weight='600' fill='#dc2626'>74</text><text x='170.0' y='29.4' text-anchor='middle' font-size='11' font-weight='600' fill='#dc2626'>78</text><text x='259.3' y='28.0' text-anchor='middle' font-size='11' font-weight='600' fill='#dc2626'>80</text>
+      <text x='80.7' y='120' text-anchor='middle' font-size='10' fill='#64748b'>Survey 1</text><text x='170.0' y='120' text-anchor='middle' font-size='10' fill='#64748b'>Survey 2</text><text x='259.3' y='120' text-anchor='middle' font-size='10' fill='#64748b'>Survey 3</text>
+    </svg>
+    
+          </div>
+        </div>
+
+        <div class='panel'>
+          <h2>How Strong Is Our Solution?</h2>
+          <div class='panel-body gauge-wrap'>
+            <p class='gauge-q'>Solution fit, innovation &amp; ambition</p>
+            
+    <svg viewBox='0 0 240 150' width='100%' preserveAspectRatio='xMidYMid meet'>
+      <path d='M 40.0 110.0 A 80 80 0 0 1 80.0 40.7' stroke='#ef4444' stroke-width='18' fill='none' stroke-linecap='butt'/><path d='M 80.0 40.7 A 80 80 0 0 1 160.0 40.7' stroke='#f59e0b' stroke-width='18' fill='none' stroke-linecap='butt'/><path d='M 160.0 40.7 A 80 80 0 0 1 200.0 110.0' stroke='#22c55e' stroke-width='18' fill='none' stroke-linecap='butt'/>
+      <line x1='120' y1='110' x2='173.4' y2='64.7' stroke='#0f172a' stroke-width='3' stroke-linecap='round'/><circle cx='120' cy='110' r='6' fill='#0f172a'/>
+    </svg>
+    
+            <div class='gauge-lbl' style='background:#22c55e'>Strong & Innovative</div>
+          </div>
+        </div>
+      </div>
+
+      <div class='action-title'>Take Action!</div>
+      <div class='actions'>
+        <div class='action-card a-teamwork'>
+          <h3>Strengthen Teamwork</h3>
+          <ul class='action-list'><li><span>Keep current rhythm - it's working.</span></li></ul>
+        </div>
+        <div class='action-card a-load'>
+          <h3>Ease the Load</h3>
+          <ul class='action-list'><li><span>Drop low-priority tasks.</span></li><li><span>Timebox to what must ship.</span></li></ul>
+        </div>
+        <div class='action-card a-solution'>
+          <h3>Boost Our Solution</h3>
+          <ul class='action-list'><li><span>Sharpen the pitch - strong base already.</span></li></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 2: DISC PROFILE =================== -->
+    <div class='tab-panel' id='panel2'>
+      <div class='disc-hero'>
+        <div class='disc-hero-grid'>
+          <div><svg viewBox='0 0 360 220' width='100%' preserveAspectRatio='xMidYMid meet'><line x1='180.0' y1='20' x2='180.0' y2='190' stroke='#cbd5e1' stroke-dasharray='4 4'/><line x1='20' y1='105.0' x2='340' y2='105.0' stroke='#cbd5e1' stroke-dasharray='4 4'/><text x='180.0' y='14' text-anchor='middle' font-size='10' fill='#64748b'>Task-focused</text><text x='180.0' y='204' text-anchor='middle' font-size='10' fill='#64748b'>People-focused</text><text x='10' y='102.0' font-size='10' fill='#64748b' transform='rotate(-90 10 102.0)'>Structured</text><text x='350' y='102.0' text-anchor='end' font-size='10' fill='#64748b' transform='rotate(-90 350 102.0)'>Fast-paced</text><circle cx='97' cy='70' r='26' fill='#3b82f6' opacity='0.9' stroke='none' stroke-width='0'/><text x='97' y='70' text-anchor='middle' dominant-baseline='central' font-size='16' font-weight='700' fill='#fff'>C</text><text x='97' y='110' text-anchor='middle' font-size='10' fill='#334155' font-weight='600'>Conscientious - 33%</text><circle cx='263' cy='70' r='20' fill='#ef4444' opacity='0.9' stroke='none' stroke-width='0'/><text x='263' y='70' text-anchor='middle' dominant-baseline='central' font-size='16' font-weight='700' fill='#fff'>D</text><text x='263' y='104' text-anchor='middle' font-size='10' fill='#334155' font-weight='600'>Dominance - 17%</text><circle cx='97' cy='158' r='20' fill='#22c55e' opacity='0.9' stroke='none' stroke-width='0'/><text x='97' y='158' text-anchor='middle' dominant-baseline='central' font-size='16' font-weight='700' fill='#fff'>S</text><text x='97' y='192' text-anchor='middle' font-size='10' fill='#334155' font-weight='600'>Steadiness - 17%</text><circle cx='263' cy='158' r='26' fill='#f59e0b' opacity='0.9' stroke='#0f172a' stroke-width='2'/><text x='263' y='158' text-anchor='middle' dominant-baseline='central' font-size='16' font-weight='700' fill='#fff'>I</text><text x='263' y='198' text-anchor='middle' font-size='10' fill='#334155' font-weight='600'>Influence - 33%</text></svg></div>
+          <div class='disc-summary'>
+            <span class='dom-badge' style='background:#f59e0b'>
+              I - Influence
+            </span>
+            <div>No single style dominates; Influence is the plurality at 33%. All four styles are represented - a well-balanced mix.</div>
+            <div class='disc-meta'>
+              <span><b>6</b> profiled</span>
+              <span>Diversity: <b>96%</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class='disc-cards'>
+        <div class='disc-card'><span class='letter' style='background:#ef4444'>D</span><div class='name'>Dominance</div><div class='pct'>17%</div><div class='blurb'>Drivers - decisive, direct, results-first.</div></div><div class='disc-card is-dom'><span class='letter' style='background:#f59e0b'>I</span><div class='name'>Influence</div><div class='pct'>33%</div><div class='blurb'>Energisers - sociable, persuasive, idea-rich.</div></div><div class='disc-card'><span class='letter' style='background:#22c55e'>S</span><div class='name'>Steadiness</div><div class='pct'>17%</div><div class='blurb'>Anchors - supportive, patient, team-keepers.</div></div><div class='disc-card'><span class='letter' style='background:#3b82f6'>C</span><div class='name'>Conscientious</div><div class='pct'>33%</div><div class='blurb'>Analysts - precise, careful, quality-driven.</div></div>
+      </div>
+
+      <div class='disc-caveat'>
+        Two-axis approximation from Survey 1 (Personal Style x Preferred
+        Culture) - not a full DISC assessment. Personal Style &lt; 50 = task-
+        focused, &gt;= 50 = people-focused. Preferred Culture &lt; 50 =
+        structured, &gt;= 50 = fast-paced.
+      </div>
+    </div>
+
+    <!-- ==================== TAB 3: INSIGHTS =================== -->
+    <div class='tab-panel' id='panel3'>
+      <div class='insight-wrap'>
+
+        <div class='ai-card'><div class='ai-header'>AI Summary</div><p>Team 06 currently finds itself operating with a stable trajectory, having maintained its composite wellbeing and cognitive load scores relatively unchanged since the last survey. The DISC style mix suggests a predominantly influencer-driven team, with a diverse range of styles that can be leveraged to drive collaboration and productivity.</p><p>One of Team 06's real strengths is its high level of psychological safety, which has been consistently scored at 68 across surveys. This indicates a strong sense of trust and openness within the team, allowing for more effective communication and idea-sharing. Additionally, the team's capability score of 83 suggests that members are confident in their abilities to deliver results.</p><p>However, the team is also exposed to some significant risks. The high cognitive load score of 80 indicates that decision-making may be becoming increasingly challenging, potentially leading to slower or less accurate decision-making. Furthermore, the relatively low productivity score of 68 suggests that the team may not be fully utilizing its capabilities. The DISC style mix, with a dominant influencer-driven approach, may exacerbate these issues if not managed carefully.</p><p>To address these risks, I strongly recommend that Team 06 prioritize reducing scope and cognitive load this week. By dropping the two lowest-priority items on the backlog today, the team can help alleviate some of the pressure and focus on delivering high-quality results. This will not only improve productivity but also help protect the team's morale and wellbeing.</p><div class='ai-footer'>Generated by llama3 from the pulse and DISC data for this team. Verify against the source data before acting on specifics.</div></div>
+
+        <div class='headline-card'>
+          <div class='eyebrow'>Where this team stands</div>
+          <div class='headline'>A team with mixed signals with a strong solution, tilted toward Influence style.</div>
+          <div class='trajectory'>Stable - composite wellbeing+load moved only +3 points vs Survey 1. Steady ship.</div>
+        </div>
+
+        <div class='mini-stats'>
+          <div class='mini-stat'>
+            <div class='label'>Pulse (composite)</div>
+            <div class='val warn'>67</div>
+          </div>
+          <div class='mini-stat'>
+            <div class='label'>Solution score</div>
+            <div class='val good'>78</div>
+          </div>
+          <div class='mini-stat'>
+            <div class='label'>Dominant style</div>
+            <div class='val' style='color:#f59e0b'>I</div>
+          </div>
+          <div class='mini-stat'>
+            <div class='label'>DISC diversity</div>
+            <div class='val'>96%</div>
+          </div>
+        </div>
+
+        <div class='priority-card'>
+          <div class='eyebrow'>Top priority this week</div>
+          <h3>Cut scope - cognitive load is in the red</h3>
+          <p>Cog load at 80 means decisions get worse, not faster. Drop the two lowest-priority items on the backlog today.</p>
+        </div>
+
+        <div class='signals-grid'>
+          <div class='signal-card'><h4>Morale is holding up well</h4><p>Wellbeing at 77 is a real asset - engaged teams ship better work. Protect it by not letting scope creep erode the energy.</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class='footer'>
+    Team 06 - 13 respondents across Survey 1, Survey 2 &amp; Survey 3.
+    Thresholds: green &gt;= 70, amber &gt;= 50, red &lt; 50. Cognitive
+    Load is inverted (low is good). Trend arrows compare Survey 3 vs Survey 2.
+  </div>
+</div>
+</body></html>
