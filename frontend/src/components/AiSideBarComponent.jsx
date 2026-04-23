@@ -9,7 +9,7 @@ function AISidebar({ isOpen, onClose }) {
       
       // Try to call the backend endpoint first
       // Fallback to text file if backend is not available
-      fetch("http://localhost:8000/api/analytics/insights")
+      fetch("${process.env.REACT_APP_API_URL}/api/analytics/insights")
         .then(async (res) => {
           if (!res.ok) throw new Error("Backend not available");
           

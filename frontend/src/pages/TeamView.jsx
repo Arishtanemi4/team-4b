@@ -138,7 +138,7 @@ export default function TeamView({ teamId }) {
   useEffect(() => {
     if (!teamId) return;
 
-    const baseUrl = "http://localhost:8000"; 
+    const baseUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
     const fetchDashboardData = async () => {
       setLoading(true);

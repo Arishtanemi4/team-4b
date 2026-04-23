@@ -13,7 +13,7 @@ export default function LoginPage({ onLogin }) {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/authenticate", {
+      const response = await fetch("${process.env.REACT_APP_API_URL}/authenticate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

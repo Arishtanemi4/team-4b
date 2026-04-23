@@ -4,8 +4,8 @@ import { X, ZoomIn, ZoomOut, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, 
 const imagesByTab = {
   "2": ["/image1.jpeg", "/image2.jpeg", "/image3.jpeg"],
   "3": ["/image4.jpeg", "/image5.jpeg", "/image6.jpeg"],
-  "4": ["/image4.jpeg", "/image5.jpeg", "/image6.jpeg"],
-  "5": ["/image4.jpeg", "/image5.jpeg", "/image6.jpeg"],
+  "4": ["/image1.jpeg", "/image2.jpeg", "/image3.jpeg"],
+  "5": ["/image1.jpeg", "/image2.jpeg", "/image3.jpeg"],
 };
 
 function AISidebar({ isOpen, onClose }) {
@@ -461,7 +461,7 @@ export default function SurveyComparison() {
         borderBottom: "1px solid #cbd5e1",
         padding: "0 0 16px 0"
       }}>
-        {["2", "3", "4", "5"].map((tab) => (
+        {["2", "3"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}

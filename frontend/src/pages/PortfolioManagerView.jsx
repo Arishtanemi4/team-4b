@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { ArrowDown, ArrowUp, ArrowRight, Bell, Sparkles, X, Loader2 } from "lucide-react";
-import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, ZAxis, Cell } from "recharts";
+import { ArrowDown, ArrowUp, ArrowRight, Bell, Sparkles, X, Loader2, ChevronDown } from "lucide-react";
+import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, ZAxis, Cell, Tooltip } from "recharts";
 import "../App.css";
 
-const API_BASE_URL = "http://localhost:8000"; 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 function AISidebar({ isOpen, onClose }) {
   const [content, setContent] = useState("");
@@ -14,24 +14,42 @@ function AISidebar({ isOpen, onClose }) {
       setLoading(true);
       setContent("");
       
-      fetch("/analytics_ai.txt")
-        .then(res => res.text())
-        .then(text => {
-          let index = 0;
-          const interval = setInterval(() => {
-            if (index < text.length) {
-              setContent(prev => prev + text[index]);
-              index++;
-            } else {
-              clearInterval(interval);
-              setLoading(false);
-            }
-          }, 20);
+      fetch("${process.env.REACT_APP_API_URL}/api/analytics/insights")
+        .then(async (res) => {
+          if (!res.ok) throw new Error("Backend not available");
+          
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const text = decoder.decode(value);
+            setContent(prev => prev + text);
+            setLoading(false);
+          }
         })
-        .catch(err => {
-          setContent("Error loading analytics AI insights");
-          setLoading(false);
-          console.error(err);
+        .catch(() => {
+          fetch("/ai_insights.txt")
+            .then(res => res.text())
+            .then(text => {
+              let index = 0;
+              const interval = setInterval(() => {
+                if (index < text.length) {
+                  setContent(prev => prev + text[index]);
+                  index++;
+                } else {
+                  clearInterval(interval);
+                  setLoading(false);
+                }
+              }, 20);
+            })
+            .catch(err => {
+              setContent("Error loading analytics insights");
+              setLoading(false);
+              console.error(err);
+            });
         });
     }
   }, [isOpen]);
@@ -113,6 +131,128 @@ function AISidebar({ isOpen, onClose }) {
   );
 }
 
+function AlertsByTeam({ alerts }) {
+  const [expandedTeams, setExpandedTeams] = useState({});
+
+  const groupedAlerts = alerts.reduce((acc, alert) => {
+    const team = alert.team_label || "System";
+    if (!acc[team]) {
+      acc[team] = [];
+    }
+    acc[team].push(alert);
+    return acc;
+  }, {});
+
+  const getBellColor = (severity) => {
+    if (!severity) return "#f59e0b";
+    const lowerLevel = String(severity).toLowerCase();
+    if (lowerLevel === "critical") return "#ef4444";
+    if (lowerLevel === "info") return "#4ade80";
+    return "#f59e0b";
+  };
+
+  const toggleTeam = (team) => {
+    setExpandedTeams(prev => ({
+      ...prev,
+      [team]: !prev[team]
+    }));
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      {Object.keys(groupedAlerts).length > 0 ? (
+        Object.entries(groupedAlerts).map(([team, teamAlerts]) => (
+          <div key={team} style={{
+            backgroundColor: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            borderRadius: "8px",
+            overflow: "hidden"
+          }}>
+            <button
+              onClick={() => toggleTeam(team)}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                fontWeight: "600",
+                color: "#1e293b",
+                textAlign: "left",
+                transition: "background 0.2s"
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "#f1f5f9"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "none"}
+            >
+              <span>{team} ({teamAlerts.length})</span>
+              <ChevronDown
+                size={18}
+                style={{
+                  transform: expandedTeams[team] ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s"
+                }}
+              />
+            </button>
+
+            {expandedTeams[team] && (
+              <div style={{
+                padding: "12px 16px",
+                borderTop: "1px solid #e2e8f0",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px"
+              }}>
+                {teamAlerts.map((alert, idx) => (
+                  <div key={idx} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                    <Bell color={getBellColor(alert.severity)} fill={getBellColor(alert.severity)} size={16} style={{ marginTop: "2px", flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <strong style={{ color: "#1e293b", fontSize: "13px" }}>{alert.metric || "Alert"}</strong>
+                      <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "12px" }}>
+                        {alert.message || "Please review"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))
+      ) : (
+        <div style={{ padding: "1rem", color: "#64748b", textAlign: "center" }}>No active alerts.</div>
+      )}
+    </div>
+  );
+}
+
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload[0]) {
+    const data = payload[0].payload;
+    return (
+      <div style={{
+        backgroundColor: "#1e293b",
+        border: "1px solid #3b82f6",
+        borderRadius: "6px",
+        padding: "8px 12px",
+        color: "#e2e8f0"
+      }}>
+        <p style={{ margin: "0 0 4px 0", fontSize: "13px", fontWeight: "600", color: "#3b82f6" }}>
+          {data.team_label}
+        </p>
+        <p style={{ margin: "0", fontSize: "12px", color: "#cbd5e1" }}>
+          Behaviour: {data.x}
+        </p>
+        <p style={{ margin: "0", fontSize: "12px", color: "#cbd5e1" }}>
+          Delivery: {data.y}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function PortfolioManagerView() {
   const [kpis, setKpis] = useState({
     needSupport: null,
@@ -127,6 +267,8 @@ export default function PortfolioManagerView() {
   const [scatterData, setScatterData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [heatmapOpen, setHeatmapOpen] = useState(false);
+  const [alertsOpen, setAlertsOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -170,7 +312,8 @@ export default function PortfolioManagerView() {
           color: p.quadrant === 'front_runner' ? '#22c55e' :
                  p.quadrant === 'high_risk' ? '#ef4444' :
                  p.quadrant === 'potential' ? '#f59e0b' : '#3b82f6',
-          team_label: p.team_label
+          team_label: p.team_label,
+          quadrant: p.quadrant
         }));
         setScatterData(mappedScatter);
         
@@ -200,14 +343,6 @@ export default function PortfolioManagerView() {
     if (lowerPriority === "high") return "badge-high";
     if (lowerPriority === "low") return "badge-low"; 
     return "badge-med";
-  };
-
-  const getBellColor = (severity) => {
-    if (!severity) return "#f59e0b"; 
-    const lowerLevel = String(severity).toLowerCase();
-    if (lowerLevel === "critical") return "#ef4444"; 
-    if (lowerLevel === "info") return "#4ade80";  
-    return "#f59e0b";
   };
 
   const getBandColor = (band) => {
@@ -300,10 +435,10 @@ export default function PortfolioManagerView() {
             <table className="support-table">
               <thead>
                 <tr>
-                  <th>Team</th>
-                  <th>Priority</th>
-                  <th>Issue</th>
-                  <th>Action</th>
+                  <th style={{ textAlign: "left" }}>Team</th>
+                  <th style={{ textAlign: "center" }}>Priority</th>
+                  <th style={{ textAlign: "left" }}>Issue</th>
+                  <th style={{ textAlign: "center" }}>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -311,10 +446,10 @@ export default function PortfolioManagerView() {
                   supportTeams.length > 0 ? (
                     supportTeams.map((item, index) => (
                       <tr key={index}>
-                        <td style={{ fontWeight: 600 }}>{item.team_label || item.team || "Unknown"}</td>
-                        <td><span className={getBadgeClass(item.priority)}>{item.priority || "Med"}</span></td>
-                        <td>{item.issue || "N/A"}</td>
-                        <td>{item.action || ""}</td>
+                        <td style={{ fontWeight: 600, textAlign: "left" }}>{item.team_label || item.team || "Unknown"}</td>
+                        <td style={{ textAlign: "center" }}><span className={getBadgeClass(item.priority)}>{item.priority || "Med"}</span></td>
+                        <td style={{ textAlign: "left" }}>{item.issue || "N/A"}</td>
+                        <td style={{ textAlign: "center" }}>{item.action || ""}</td>
                       </tr>
                     ))
                   ) : (
@@ -330,67 +465,93 @@ export default function PortfolioManagerView() {
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             
             <div className="dash-panel">
-              <div className="dash-panel-header">Team Status Heatmap</div>
-              <div className="heatmap-container">
-                <div className="heatmap-grid">
-                  <div></div>
-                  <div className="heatmap-header-cell">Wellbeing</div>
-                  <div className="heatmap-header-cell">Access</div>
-                  <div className="heatmap-header-cell">Productivity</div>
-                  <div className="heatmap-header-cell">Capacity</div>
-                  <div className="heatmap-header-cell">Collab.</div>
-                  <div className="heatmap-header-cell">Safety</div>
-                  <div className="heatmap-header-cell">Cog. Load</div>
-                  
-                  {Array.isArray(heatmapData) ? (
-                    heatmapData.length > 0 ? (
-                      heatmapData.map((row, i) => (
-                        <React.Fragment key={i}>
-                          <div className="heatmap-row-label">{row.team_label || `Team ${row.team}`}</div>
-                          {Array.isArray(row.cells) ? (
-                            row.cells.map((cell, j) => (
-                              <div key={j} className="heatmap-cell" style={{ backgroundColor: getBandColor(cell.band) }}></div>
-                            ))
-                          ) : (
-                            <div style={{ gridColumn: "span 7", fontSize: "0.8rem", color: "red" }}>Invalid score data</div>
-                          )}
-                        </React.Fragment>
-                      ))
-                    ) : (
-                      <div style={{ gridColumn: "1 / -1", padding: "1rem", textAlign: "center" }}>No heatmap data available.</div>
-                    )
-                  ) : (
-                    <div style={{ gridColumn: "1 / -1", padding: "1rem", color: "red", textAlign: "center" }}>
-                      Data format error: Expected an array for heatmap.
-                    </div>
-                  )}
-                </div>
+              <div className="dash-panel-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>Team Status Heatmap</span>
+                <button
+                  onClick={() => setHeatmapOpen(!heatmapOpen)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#64748b",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    padding: "4px 8px",
+                  }}
+                >
+                  {heatmapOpen ? "▼ Hide" : "▶ Show"}
+                </button>
               </div>
+              {heatmapOpen && (
+                <div className="heatmap-container">
+                  <div className="heatmap-grid">
+                    <div></div>
+                    <div className="heatmap-header-cell">Wellbeing</div>
+                    <div className="heatmap-header-cell">Access</div>
+                    <div className="heatmap-header-cell">Productivity</div>
+                    <div className="heatmap-header-cell">Capacity</div>
+                    <div className="heatmap-header-cell">Collab.</div>
+                    <div className="heatmap-header-cell">Safety</div>
+                    <div className="heatmap-header-cell">Cog. Load</div>
+                    
+                    {Array.isArray(heatmapData) ? (
+                      heatmapData.length > 0 ? (
+                        heatmapData.map((row, i) => (
+                          <React.Fragment key={i}>
+                            <div className="heatmap-row-label">{row.team_label || `Team ${row.team}`}</div>
+                            {Array.isArray(row.cells) ? (
+                              row.cells.map((cell, j) => (
+                                <div key={j} className="heatmap-cell" style={{ backgroundColor: getBandColor(cell.band) }}></div>
+                              ))
+                            ) : (
+                              <div style={{ gridColumn: "span 7", fontSize: "0.8rem", color: "red" }}>Invalid score data</div>
+                            )}
+                          </React.Fragment>
+                        ))
+                      ) : (
+                        <div style={{ gridColumn: "1 / -1", padding: "1rem", textAlign: "center" }}>No heatmap data available.</div>
+                      )
+                    ) : (
+                      <div style={{ gridColumn: "1 / -1", padding: "1rem", color: "red", textAlign: "center" }}>
+                        Data format error: Expected an array for heatmap.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="dash-panel">
-              <div className="dash-panel-header">Alert Summary</div>
-              <div className="alerts-list">
-                {Array.isArray(alerts) ? (
-                  alerts.length > 0 ? (
-                    alerts.map((alert, index) => {
-                      const bellColor = getBellColor(alert.severity);
-                      return (
-                        <div className="alert-item" key={index}>
-                          <Bell color={bellColor} fill={bellColor} size={20} />
-                          <div>
-                            <strong>{alert.team_label || "System"}:</strong> {alert.metric || "Alert"} – <em>{alert.message || "Please review"}</em>
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div style={{ padding: "1rem", color: "#64748b" }}>No active alerts.</div>
-                  )
-                ) : (
-                  <div style={{ padding: "1rem", color: "red" }}>Data format error: Expected an array of alerts.</div>
-                )}
+              <div className="dash-panel-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>Alert Summary</span>
+                <button
+                  onClick={() => setAlertsOpen(!alertsOpen)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#64748b",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    padding: "4px 8px",
+                  }}
+                >
+                  {alertsOpen ? "▼ Hide" : "▶ Show"}
+                </button>
               </div>
+              {alertsOpen && (
+                <div style={{ padding: "12px 0" }}>
+                  {Array.isArray(alerts) ? (
+                    alerts.length > 0 ? (
+                      <AlertsByTeam alerts={alerts} />
+                    ) : (
+                      <div style={{ padding: "1rem", color: "#64748b" }}>No active alerts.</div>
+                    )
+                  ) : (
+                    <div style={{ padding: "1rem", color: "red" }}>Data format error: Expected an array of alerts.</div>
+                  )}
+                </div>
+              )}
             </div>
 
           </div>
@@ -409,16 +570,18 @@ export default function PortfolioManagerView() {
               <div className="quadrant-label lbl-tl">Front<br/>Runners</div>
               <div className="quadrant-label lbl-tr">High Risk<br/>Zone</div>
               <div className="quadrant-label lbl-bl">Potential,<br/>Needs Support</div>
+              <div className="quadrant-label lbl-br">Low Priority</div>
 
               {Array.isArray(scatterData) && scatterData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%" style={{ zIndex: 10, position: "relative" }}>
-                  <ScatterChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                  <ScatterChart margin={{ top: 0, right: 0, bottom: 0, left: 60 }}>
                     <XAxis type="number" dataKey="x" name="Behaviour Health" domain={[0, 100]} hide />
                     <YAxis type="number" dataKey="y" name="Delivery Confidence" domain={[0, 100]} hide />
                     <ZAxis type="number" range={[100, 100]} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Scatter data={scatterData} isAnimationActive={false}>
                       {scatterData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color || "#1e3a8a"} />
+                        <Cell key={`cell-${index}`} fill={entry.color || "#1e3a8a" } />
                       ))}
                     </Scatter>
                   </ScatterChart>
@@ -432,7 +595,7 @@ export default function PortfolioManagerView() {
               <div style={{ position: "absolute", bottom: "5px", left: "0", width: "100%", textAlign: "center", fontSize: "0.85rem", fontWeight: 600, color: "#334155" }}>
                 Behaviour Health
               </div>
-              <div style={{ position: "absolute", left: "-35px", top: "50%", transform: "translateY(-50%) rotate(-90deg)", fontSize: "0.85rem", fontWeight: 600, color: "#334155", whiteSpace: "nowrap" }}>
+              <div style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%) rotate(-90deg)", fontSize: "0.85rem", fontWeight: 600, color: "#334155", whiteSpace: "nowrap", transformOrigin: "left center" }}>
                 Delivery Confidence
               </div>
             </div>
